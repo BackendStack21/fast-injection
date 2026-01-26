@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-bun add fast-di
+bun add fast-injection
 ```
 
 ## Basic Usage
@@ -11,8 +11,8 @@ bun add fast-di
 ### 1. Simple Service Registration
 
 ```typescript
-import { Container } from "fast-di";
-import { singleton } from "fast-di/decorators";
+import { Container } from "fast-injection";
+import { singleton } from "fast-injection/decorators";
 
 @singleton()
 class Logger {
@@ -25,14 +25,14 @@ const container = new Container();
 container.register(Logger); // Decorator controls lifetime
 
 const logger = container.resolve(Logger);
-logger.log("Hello, fast-di!");
+logger.log("Hello, fast-injection!");
 ```
 
 ### 2. Dependency Injection with Factories
 
 ```typescript
-import { Container } from "fast-di";
-import { singleton } from "fast-di/decorators";
+import { Container } from "fast-injection";
+import { singleton } from "fast-injection/decorators";
 
 @singleton()
 class Database {
@@ -68,8 +68,8 @@ console.log(service.getUsers());
 ### 3. Scoped Containers (for HTTP requests)
 
 ```typescript
-import { Container } from "fast-di";
-import { singleton, scoped, inject } from "fast-di/decorators";
+import { Container } from "fast-injection";
+import { singleton, scoped, inject } from "fast-injection/decorators";
 
 @singleton()
 class Database {
@@ -104,7 +104,7 @@ await requestScope.dispose();
 Use `getGlobalContainer()` to access a shared container instance across your entire application without passing it around:
 
 ```typescript
-import { getGlobalContainer, resetGlobalContainer, Lifetime } from "fast-di";
+import { getGlobalContainer, resetGlobalContainer, Lifetime } from "fast-injection";
 
 // Setup at application startup (e.g., in main.ts)
 function setupContainer() {
@@ -175,7 +175,7 @@ await container.dispose(); // Calls onDispose on all services
 ### 7. Testing with Mocks
 
 ```typescript
-import { createTestContainer } from "fast-di/testing";
+import { createTestContainer } from "fast-injection/testing";
 
 // In your tests
 const container = createTestContainer();
@@ -198,7 +198,7 @@ const service = container.resolve(UserService);
 While decorators are the recommended default, explicit options are useful when:
 
 ```typescript
-import { Lifetime } from "fast-di";
+import { Lifetime } from "fast-injection";
 
 // Override decorator at registration
 @singleton()
@@ -220,8 +220,8 @@ You can use decorators to control service lifetimes and document your code. **De
 ### 8. Decorator-Based Lifetimes
 
 ```typescript
-import { Container } from "fast-di";
-import { singleton, transient, scoped } from "fast-di/decorators";
+import { Container } from "fast-injection";
+import { singleton, transient, scoped } from "fast-injection/decorators";
 
 @singleton()
 class ConfigService {
@@ -267,7 +267,7 @@ console.log(logger1 === logger2); // false
 ### 8. Using @inject for Interface Tokens
 
 ```typescript
-import { injectable, inject } from "fast-di/decorators";
+import { injectable, inject } from "fast-injection/decorators";
 
 const ILogger = Symbol("ILogger");
 const IDatabase = Symbol("IDatabase");
@@ -325,7 +325,7 @@ await service.getUsers();
 ### 9. Decorators Control Lifetimes
 
 ```typescript
-import { singleton } from "fast-di/decorators";
+import { singleton } from "fast-injection/decorators";
 
 @singleton()
 class Database {
@@ -412,7 +412,7 @@ const service = container.resolve(UserService);
 }
 ```
 
-### Decorator Methods (from "fast-di/decorators")
+### Decorator Methods (from "fast-injection/decorators")
 
 - `@injectable()` - Mark class as injectable (transient lifetime)
 - `@singleton()` - Mark class as singleton lifetime
@@ -495,7 +495,7 @@ container.registerFactory(UserService, (c) => {
 });
 
 // Or, with decorators and @inject, no factory is needed:
-import { singleton, inject } from "fast-di/decorators";
+import { singleton, inject } from "fast-injection/decorators";
 
 @singleton()
 class UserService {
@@ -588,4 +588,4 @@ container.registerFactory(ServiceA, (c) => {
 
 ---
 
-**fast-di** - Built with ❤️ by [21no.de](https://21no.de) | [MIT License](LICENSE)
+**fast-injection** - Built with ❤️ by [21no.de](https://21no.de) | [MIT License](LICENSE)

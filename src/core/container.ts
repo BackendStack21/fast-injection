@@ -350,7 +350,7 @@ export function createContainer(): IContainer {
  *
  * @example
  * ```typescript
- * import { getGlobalContainer } from 'fast-di';
+ * import { getGlobalContainer } from 'fast-injection';
  *
  * // Register services at application startup
  * const container = getGlobalContainer();
@@ -364,7 +364,7 @@ export function createContainer(): IContainer {
  * @example
  * ```typescript
  * // Reset global container (useful for testing)
- * import { resetGlobalContainer } from 'fast-di';
+ * import { resetGlobalContainer } from 'fast-injection';
  *
  * afterEach(async () => {
  *   await resetGlobalContainer();
@@ -385,7 +385,7 @@ let globalContainerInstance: Container | null = null;
  * @example
  * ```typescript
  * // In your application bootstrap
- * import { getGlobalContainer } from 'fast-di';
+ * import { getGlobalContainer } from 'fast-injection';
  *
  * const container = getGlobalContainer();
  * container.register(DatabaseService, { lifetime: Lifetime.Singleton });
@@ -395,7 +395,7 @@ let globalContainerInstance: Container | null = null;
  * @example
  * ```typescript
  * // In any module that needs dependencies
- * import { getGlobalContainer } from 'fast-di';
+ * import { getGlobalContainer } from 'fast-injection';
  *
  * const container = getGlobalContainer();
  * const userService = container.resolve(UserService);
@@ -420,7 +420,7 @@ export function getGlobalContainer(): Container {
  *
  * @example
  * ```typescript
- * import { resetGlobalContainer } from 'fast-di';
+ * import { resetGlobalContainer } from 'fast-injection';
  *
  * // In test cleanup
  * afterEach(async () => {
@@ -431,7 +431,7 @@ export function getGlobalContainer(): Container {
  * @example
  * ```typescript
  * // Reset during application lifecycle
- * import { resetGlobalContainer, getGlobalContainer } from 'fast-di';
+ * import { resetGlobalContainer, getGlobalContainer } from 'fast-injection';
  *
  * // Clean up old container
  * await resetGlobalContainer();

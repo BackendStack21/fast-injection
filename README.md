@@ -1,9 +1,9 @@
-# fast-di 🚀
+# fast-injection 🚀
 
 Modern, lightweight TypeScript Dependency Injection optimized for Bun runtime.
 
-[![npm version](https://img.shields.io/npm/v/fast-di)](https://www.npmjs.com/package/fast-di)
-[![Bundle Size](https://img.shields.io/badge/bundle%20size-%3C5KB-brightgreen)](https://github.com/21no-de/fast-di)
+[![npm version](https://img.shields.io/npm/v/fast-injection)](https://www.npmjs.com/package/fast-injection)
+[![Bundle Size](https://img.shields.io/badge/bundle%20size-%3C5KB-brightgreen)](https://github.com/21no-de/fast-injection)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-1.0%2B-orange)](https://bun.sh)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -24,7 +24,7 @@ Modern, lightweight TypeScript Dependency Injection optimized for Bun runtime.
 
 ## Performance
 
-Fast-DI is optimized for speed with minimal overhead. Here are the key performance metrics:
+Fast-Injection is optimized for speed with minimal overhead. Here are the key performance metrics:
 
 | Operation            | Ops/Second    | Avg Time | Notes                            |
 | -------------------- | ------------- | -------- | -------------------------------- |
@@ -59,7 +59,7 @@ Run benchmarks yourself: `bun run bench`
 ## Installation
 
 ```bash
-bun add fast-di
+bun add fast-injection
 ```
 
 ## Quick Start
@@ -67,8 +67,8 @@ bun add fast-di
 ### Basic Usage
 
 ```typescript
-import { Container } from "fast-di";
-import { singleton, inject } from "fast-di/decorators";
+import { Container } from "fast-injection";
+import { singleton, inject } from "fast-injection/decorators";
 
 // Step 1: Define your services
 // Use @singleton() decorator to mark this class as a singleton
@@ -106,7 +106,7 @@ const userService = container.resolve(UserService);
 ### Lifecycle Hooks (Basic)
 
 ```typescript
-import { Container } from "fast-di";
+import { Container } from "fast-injection";
 
 class Cache {
   private store = new Map<string, string>();
@@ -144,8 +144,8 @@ await c.dispose();
 ### Advanced: Multiple Lifetimes
 
 ```typescript
-import { Container } from "fast-di";
-import { singleton, transient, scoped } from "fast-di/decorators";
+import { Container } from "fast-injection";
+import { singleton, transient, scoped } from "fast-injection/decorators";
 
 // SINGLETON: One instance shared across the entire application
 // Perfect for: configuration, database connections, loggers
@@ -196,8 +196,8 @@ const ctx3 = anotherScope.resolve(RequestContext);
 ### Using @inject for Constructor Injection
 
 ```typescript
-import { Container } from "fast-di";
-import { singleton, inject } from "fast-di/decorators";
+import { Container } from "fast-injection";
+import { singleton, inject } from "fast-injection/decorators";
 
 // Step 1: Define your dependencies
 @singleton()
@@ -279,7 +279,7 @@ bun run bench
 
 ## Security
 
-Fast-DI includes multiple security enhancements to protect your applications:
+Fast-Injection includes multiple security enhancements to protect your applications:
 
 ### Token Validation
 
@@ -291,7 +291,7 @@ bun run bench
 
 ## Security
 
-Fast-DI implements comprehensive security measures to protect against common vulnerabilities. See [SECURITY.md](SECURITY.md) for detailed information.
+Fast-Injection implements comprehensive security measures to protect against common vulnerabilities. See [SECURITY.md](SECURITY.md) for detailed information.
 
 **Key Features:**
 - 🛡️ **Prototype Pollution Prevention**: Token validation rejects dangerous property names

@@ -14,7 +14,7 @@ const examples = [
   "11-lifecycle-hooks-advanced.ts",
 ];
 
-console.log("🚀 Running all fast-di examples...\n");
+console.log("🚀 Running all fast-injection examples...\n");
 console.log("=".repeat(60));
 
 for (const example of examples) {

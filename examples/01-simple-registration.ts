@@ -14,6 +14,6 @@ const container = new Container();
 container.register(Logger);
 
 const logger = container.resolve(Logger);
-logger.log("Hello, fast-di!");
+logger.log("Hello, fast-injection!");
 
 console.log("\n✅ Example 1 completed successfully!\n");

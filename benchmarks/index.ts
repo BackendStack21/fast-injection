@@ -561,7 +561,7 @@ async function runComparisonBenchmarks(): Promise<void> {
 
 // Main execution
 async function main(): Promise<void> {
-  console.log("🚀 Fast-DI Performance Benchmarks");
+  console.log("🚀 Fast-Injection Performance Benchmarks");
   console.log(`Running on Bun ${Bun.version}`);
   console.log(`Platform: ${process.platform} ${process.arch}`);
 

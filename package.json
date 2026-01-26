@@ -1,0 +1,78 @@
+{
+  "name": "fast-di",
+  "version": "0.1.0",
+  "description": "Modern, lightweight TypeScript Dependency Injection optimized for Bun",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./decorators": {
+      "import": "./dist/decorators/index.js",
+      "types": "./dist/decorators/index.d.ts"
+    },
+    "./testing": {
+      "import": "./dist/testing/index.js",
+      "types": "./dist/testing/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "bun run clean && bun build:types && bun build:bundle",
+    "build:types": "tsc --emitDeclarationOnly",
+    "build:bundle": "bun build src/index.ts --outdir dist --target bun --format esm --minify",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
+    "bench": "bun run benchmarks/index.ts",
+    "lint": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "memory-check": "bun --expose-gc run scripts/memory-leak-check.ts",
+    "prepublishOnly": "bun run build && bun test"
+  },
+  "keywords": [
+    "dependency-injection",
+    "di",
+    "ioc",
+    "container",
+    "typescript",
+    "bun",
+    "fast",
+    "lightweight",
+    "decorator",
+    "21no.de"
+  ],
+  "author": {
+    "name": "21no.de",
+    "url": "https://21no.de"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/21no-de/fast-di.git"
+  },
+  "bugs": {
+    "url": "https://github.com/21no-de/fast-di/issues"
+  },
+  "homepage": "https://github.com/21no-de/fast-di#readme",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+}

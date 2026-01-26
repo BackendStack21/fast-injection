@@ -1,0 +1,6 @@
+[test]
+coverage = true
+
+[install]
+exact = true
+peer = true

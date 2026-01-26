@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>fast-di - Modern TypeScript Dependency Injection</title>
+    <meta
+      name="description"
+      content="Blazing fast, lightweight TypeScript Dependency Injection optimized for Bun runtime. Sub-microsecond resolution, type-safe, zero dependencies."
+    />
+    <meta name="keywords" content="dependency injection, typescript, bun, ioc, container, di, fast, lightweight" />
+    <meta property="og:title" content="fast-di - Modern TypeScript Dependency Injection" />
+    <meta
+      property="og:description"
+      content="Blazing fast, lightweight TypeScript Dependency Injection optimized for Bun runtime."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Hero Section -->
+    <header class="hero">
+      <canvas id="matrix-canvas"></canvas>
+      <nav class="nav">
+        <div class="nav-logo">
+          <img src="logo.svg" alt="fast-di logo" class="logo-img" />
+          <span class="logo-text">fast-di</span>
+        </div>
+        <div class="nav-links">
+          <a href="#features">Features</a>
+          <a href="#getting-started">Get Started</a>
+          <a href="#performance">Performance</a>
+          <a href="https://github.com/BackendStack21/fast-di" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </nav>
+
+      <div class="hero-content">
+        <div class="hero-logo">
+          <img src="logo.svg" alt="fast-di" class="hero-logo-img" />
+        </div>
+        <h1 class="hero-title">fast-di</h1>
+        <p class="hero-subtitle">Modern TypeScript Dependency Injection</p>
+        <p class="hero-description">
+          Blazing fast, lightweight DI container optimized for <strong>Bun</strong> runtime.<br />
+          Sub-microsecond resolution with full type safety.
+        </p>
+        <div class="hero-actions">
+          <a href="#getting-started" class="btn btn-primary">Get Started</a>
+          <a href="https://github.com/BackendStack21/fast-di" class="btn btn-secondary" target="_blank" rel="noopener">
+            <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+              />
+            </svg>
+            View on GitHub
+          </a>
+        </div>
+        <div class="hero-install">
+          <code class="install-code"> <span class="install-prefix">$</span> bun add fast-di </code>
+          <button class="copy-btn" onclick="copyInstall()" title="Copy to clipboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-glow"></div>
+    </header>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+      <h2 class="section-title">Why fast-di?</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>Blazing Fast</h3>
+          <p>Sub-microsecond dependency resolution. Up to <strong>26M ops/sec</strong> for cached singletons.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🪶</div>
+          <h3>Lightweight</h3>
+          <p>Less than <strong>5KB</strong> minified + gzipped. No production dependencies.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>Type-Safe</h3>
+          <p>Full TypeScript support with automatic type inference. Catch errors at compile time.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3>Secure</h3>
+          <p>Protected against prototype pollution, memory leaks, ReDoS, and DoS attacks.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔄</div>
+          <h3>Multiple Lifetimes</h3>
+          <p>Singleton, transient, and scoped lifetimes for complete control over instance creation.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <h3>Flexible API</h3>
+          <p>Choose your style: decorators, functional, or imperative. It's your choice.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🧪</div>
+          <h3>Testing Friendly</h3>
+          <p>Built-in testing utilities for easy mocking and test isolation.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔥</div>
+          <h3>Bun Optimized</h3>
+          <p>Native performance optimizations for the <strong>Bun</strong> runtime.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Getting Started Section -->
+    <section id="getting-started" class="getting-started">
+      <h2 class="section-title">Getting Started</h2>
+      <p class="section-description">Start using fast-di in minutes with our intuitive API.</p>
+
+      <div class="code-tabs">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-tab="decorators">Decorators</button>
+          <button class="tab-btn" data-tab="functional">Functional</button>
+          <button class="tab-btn" data-tab="lifecycle">Lifecycle</button>
+        </div>
+
+        <div class="tab-content active" id="decorators">
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-lang">TypeScript</span>
+              <button class="copy-btn" onclick="copyCode('decorators-code')" title="Copy to clipboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+            <pre
+              id="decorators-code"
+            ><code><span class="keyword">import</span> { Container } <span class="keyword">from</span> <span class="string">"fast-di"</span>;
+<span class="keyword">import</span> { singleton, inject } <span class="keyword">from</span> <span class="string">"fast-di/decorators"</span>;
+
+<span class="comment">// Define services with decorators</span>
+<span class="decorator">@singleton()</span>
+<span class="keyword">class</span> <span class="class">Database</span> {
+  <span class="method">connect</span>() { <span class="comment">/* ... */</span> }
+}
+
+<span class="decorator">@singleton()</span>
+<span class="keyword">class</span> <span class="class">UserService</span> {
+  <span class="keyword">constructor</span>(<span class="decorator">@inject(Database)</span> <span class="keyword">private</span> db: <span class="class">Database</span>) {}
+
+  <span class="method">getUser</span>(id: <span class="type">string</span>) {
+    <span class="keyword">return</span> <span class="keyword">this</span>.db.query(<span class="string">`SELECT * FROM users WHERE id = </span><span class="interpolation">${id}</span><span class="string">`</span>);
+  }
+}
+
+<span class="comment">// Create container and register services</span>
+<span class="keyword">const</span> container = <span class="keyword">new</span> <span class="class">Container</span>();
+container.<span class="method">register</span>(<span class="class">Database</span>);
+container.<span class="method">register</span>(<span class="class">UserService</span>);
+
+<span class="comment">// Resolve with automatic dependency injection</span>
+<span class="keyword">const</span> userService = container.<span class="method">resolve</span>(<span class="class">UserService</span>);</code></pre>
+          </div>
+        </div>
+
+        <div class="tab-content" id="functional">
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-lang">TypeScript</span>
+              <button class="copy-btn" onclick="copyCode('functional-code')" title="Copy to clipboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+            <pre
+              id="functional-code"
+            ><code><span class="keyword">import</span> { Container, Lifetime } <span class="keyword">from</span> <span class="string">"fast-di"</span>;
+
+<span class="comment">// Define your services</span>
+<span class="keyword">class</span> <span class="class">Config</span> {
+  apiUrl = <span class="string">"https://api.example.com"</span>;
+}
+
+<span class="keyword">class</span> <span class="class">ApiClient</span> {
+  <span class="keyword">constructor</span>(<span class="keyword">private</span> config: <span class="class">Config</span>) {}
+}
+
+<span class="comment">// Create container</span>
+<span class="keyword">const</span> container = <span class="keyword">new</span> <span class="class">Container</span>();
+
+<span class="comment">// Register with factory functions</span>
+container.<span class="method">register</span>(<span class="class">Config</span>, {
+  lifetime: Lifetime.<span class="property">Singleton</span>
+});
+
+container.<span class="method">register</span>(<span class="class">ApiClient</span>, {
+  lifetime: Lifetime.<span class="property">Singleton</span>,
+  factory: (c) => <span class="keyword">new</span> <span class="class">ApiClient</span>(c.<span class="method">resolve</span>(<span class="class">Config</span>))
+});
+
+<span class="comment">// Resolve services</span>
+<span class="keyword">const</span> client = container.<span class="method">resolve</span>(<span class="class">ApiClient</span>);</code></pre>
+          </div>
+        </div>
+
+        <div class="tab-content" id="lifecycle">
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-lang">TypeScript</span>
+              <button class="copy-btn" onclick="copyCode('lifecycle-code')" title="Copy to clipboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+            <pre
+              id="lifecycle-code"
+            ><code><span class="keyword">import</span> { Container } <span class="keyword">from</span> <span class="string">"fast-di"</span>;
+
+<span class="keyword">class</span> <span class="class">Cache</span> {
+  <span class="keyword">private</span> store = <span class="keyword">new</span> <span class="class">Map</span>&lt;<span class="type">string</span>, <span class="type">string</span>&gt;();
+
+  <span class="comment">// Called after instantiation</span>
+  <span class="method">onInit</span>() {
+    console.<span class="method">log</span>(<span class="string">"Cache initialized"</span>);
+  }
+
+  <span class="comment">// Called on container/scope disposal</span>
+  <span class="method">onDispose</span>() {
+    <span class="keyword">this</span>.store.<span class="method">clear</span>();
+    console.<span class="method">log</span>(<span class="string">"Cache disposed"</span>);
+  }
+
+  <span class="method">set</span>(key: <span class="type">string</span>, value: <span class="type">string</span>) {
+    <span class="keyword">this</span>.store.<span class="method">set</span>(key, value);
+  }
+}
+
+<span class="keyword">const</span> container = <span class="keyword">new</span> <span class="class">Container</span>();
+container.<span class="method">register</span>(<span class="class">Cache</span>);
+
+<span class="keyword">const</span> cache = container.<span class="method">resolve</span>(<span class="class">Cache</span>);
+cache.<span class="method">set</span>(<span class="string">"foo"</span>, <span class="string">"bar"</span>);
+
+<span class="comment">// Cleanup when done</span>
+<span class="keyword">await</span> container.<span class="method">dispose</span>();</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Performance Section -->
+    <section id="performance" class="performance">
+      <h2 class="section-title">Performance Benchmarks</h2>
+      <p class="section-description">Optimized for speed with minimal overhead</p>
+
+      <div class="benchmark-table-wrapper">
+        <table class="benchmark-table">
+          <thead>
+            <tr>
+              <th>Operation</th>
+              <th>Ops/Second</th>
+              <th>Avg Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="highlight">
+              <td><span class="op-icon">🚀</span> Singleton (cached)</td>
+              <td><strong>~26M</strong> ops/sec</td>
+              <td>0.038µs</td>
+            </tr>
+            <tr>
+              <td><span class="op-icon">📦</span> Scoped (cached)</td>
+              <td>~25M ops/sec</td>
+              <td>0.039µs</td>
+            </tr>
+            <tr>
+              <td><span class="op-icon">🔨</span> Create scope</td>
+              <td>~21M ops/sec</td>
+              <td>0.048µs</td>
+            </tr>
+            <tr>
+              <td><span class="op-icon">💾</span> Value retrieval</td>
+              <td>~19M ops/sec</td>
+              <td>0.052µs</td>
+            </tr>
+            <tr>
+              <td><span class="op-icon">🔄</span> Transient</td>
+              <td>~11M ops/sec</td>
+              <td>0.091µs</td>
+            </tr>
+            <tr>
+              <td><span class="op-icon">🏭</span> Factory</td>
+              <td>~7.8M ops/sec</td>
+              <td>0.13µs</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="benchmark-note">* Benchmarks run on Apple M2 Pro with Bun runtime</p>
+
+      <div class="performance-tip">
+        <div class="tip-icon">💡</div>
+        <div class="tip-content">
+          <strong>Performance Tip:</strong> Use <code>@singleton()</code> for services like database connections,
+          configuration, and loggers. Singleton resolution is <strong>98% faster</strong> than transient.
+        </div>
+      </div>
+    </section>
+
+    <!-- Documentation Section -->
+    <section id="documentation" class="documentation">
+      <h2 class="section-title">Documentation</h2>
+      <p class="section-description">Everything you need to get productive</p>
+
+      <div class="docs-grid">
+        <a
+          href="https://github.com/BackendStack21/fast-di/blob/main/QUICKSTART.md"
+          class="doc-card"
+          target="_blank"
+          rel="noopener"
+        >
+          <div class="doc-icon">📄</div>
+          <h3>Quick Start Guide</h3>
+          <p>Get up and running with fast-di in minutes. Perfect for beginners.</p>
+        </a>
+        <a href="https://github.com/BackendStack21/fast-di/tree/main/examples" class="doc-card" target="_blank" rel="noopener">
+          <div class="doc-icon">📘</div>
+          <h3>Examples</h3>
+          <p>Comprehensive examples covering all features and use cases.</p>
+        </a>
+        <a
+          href="https://github.com/BackendStack21/fast-di/blob/main/SECURITY.md"
+          class="doc-card"
+          target="_blank"
+          rel="noopener"
+        >
+          <div class="doc-icon">🛡️</div>
+          <h3>Security Guide</h3>
+          <p>Learn about security features and best practices.</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+      <h2>Ready to supercharge your DI?</h2>
+      <p>Join developers building faster, more maintainable applications with fast-di.</p>
+      <div class="cta-actions">
+        <a href="https://github.com/BackendStack21/fast-di" class="btn btn-primary" target="_blank" rel="noopener">
+          <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+            />
+          </svg>
+          Star on GitHub
+        </a>
+        <a href="https://www.npmjs.com/package/fast-di" class="btn btn-secondary" target="_blank" rel="noopener">
+          View on npm
+        </a>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-logo">
+          <img src="logo.svg" alt="fast-di" class="footer-logo-img" />
+          <span>fast-di</span>
+        </div>
+        <div class="footer-links">
+          <a href="https://github.com/BackendStack21/fast-di" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://www.npmjs.com/package/fast-di" target="_blank" rel="noopener">npm</a>
+          <a href="https://github.com/BackendStack21/fast-di/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 <a href="https://21no.de" target="_blank" rel="noopener">21no.de</a>. Built with ❤️</p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

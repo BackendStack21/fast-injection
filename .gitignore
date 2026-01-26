@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+bun.lockb
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Coverage
+coverage/
+.coverage/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local and CI artifacts
+bench-output.txt
+memory-check-output.txt
+
+# Test / coverage caches
+.nyc_output
+
+# Tool caches
+.eslintcache
+.cache/
+.parcel-cache/
+

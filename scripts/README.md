@@ -1,6 +1,6 @@
 # Scripts
 
-Utility scripts for the fast-di project.
+Utility scripts for the fast-injection project.
 
 ## Memory Leak Check
 

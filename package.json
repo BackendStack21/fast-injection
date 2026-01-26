@@ -1,5 +1,5 @@
 {
-  "name": "fast-di",
+  "name": "fast-injection",
   "version": "0.1.0",
   "description": "Modern, lightweight TypeScript Dependency Injection optimized for Bun",
   "type": "module",
@@ -58,12 +58,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/21no-de/fast-di.git"
+    "url": "git+https://github.com/21no-de/fast-injection.git"
   },
   "bugs": {
-    "url": "https://github.com/21no-de/fast-di/issues"
+    "url": "https://github.com/21no-de/fast-injection/issues"
   },
-  "homepage": "https://github.com/21no-de/fast-di#readme",
+  "homepage": "https://github.com/21no-de/fast-injection#readme",
   "devDependencies": {
     "@types/bun": "latest",
     "prettier": "^3.2.4",

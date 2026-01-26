@@ -1,6 +1,6 @@
-# Fast-DI Performance Benchmarks
+# Fast-Injection Performance Benchmarks
 
-This directory contains comprehensive performance benchmarks for the Fast-DI dependency injection container.
+This directory contains comprehensive performance benchmarks for the Fast-Injection dependency injection container.
 
 ## Running Benchmarks
 
@@ -202,7 +202,7 @@ The overhead from these protections is minimal (< 0.01µs per operation) while e
 
 ## Comparison with Other DI Containers
 
-Fast-DI is optimized for Bun and provides:
+Fast-Injection is optimized for Bun and provides:
 
 - **Ultra-low overhead**: ~0.988µs per transient resolution, ~0.037µs for singletons
 - **Excellent singleton performance**: 26.8M ops/sec (explicit), 16.7M ops/sec (decorator)

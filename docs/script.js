@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Copy install command
 function copyInstall() {
-  const text = "bun add fast-di";
+  const text = "bun add fast-injection";
   copyToClipboard(text);
   showCopyFeedback(event.currentTarget);
 }
@@ -192,10 +192,10 @@ function initMatrixRain() {
 
   const ctx = canvas.getContext("2d");
 
-  // Real example code lines from fast-di usage
+  // Real example code lines from fast-injection usage
   const codeLines = [
-    'import { Container } from "fast-di";',
-    'import { singleton, inject } from "fast-di/decorators";',
+    'import { Container } from "fast-injection";',
+    'import { singleton, inject } from "fast-injection/decorators";',
     "@singleton()",
     "class Database {",
     "  connect() { /* ... */ }",

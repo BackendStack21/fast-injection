@@ -1,6 +1,6 @@
 # Security Enhancements
 
-This document describes the security features and best practices implemented in fast-di to protect against common vulnerabilities.
+This document describes the security features and best practices implemented in fast-injection to protect against common vulnerabilities.
 
 ## Security Features
 
@@ -77,7 +77,7 @@ const result = await container.resolveAsync("api");
 **Solution**: Explicit cleanup function for decorator metadata:
 
 ```typescript
-import { clearDecoratorMetadata, singleton } from "fast-di/decorators";
+import { clearDecoratorMetadata, singleton } from "fast-injection/decorators";
 
 // Create dynamic service
 @singleton()
@@ -201,7 +201,7 @@ container.register("prototype", Service); // Throws!
 Always dispose containers to prevent resource leaks:
 
 ```typescript
-import { singleton } from "fast-di/decorators";
+import { singleton } from "fast-injection/decorators";
 
 @singleton()
 class DatabaseConnection {
@@ -335,7 +335,7 @@ The security test suite includes:
 
 ### Not Protected Against
 
-- **Code Injection**: Fast-di does not validate factory function code
+- **Code Injection**: The library does not validate factory function code
 - **Dependency Confusion**: Users must ensure correct service registration
 - **DoS via Circular Dependencies**: Detected but not prevented (throws error)
 
@@ -355,4 +355,4 @@ The security test suite includes:
 
 ---
 
-**fast-di** - Built with ❤️ by [21no.de](https://21no.de)
+**fast-injection** - Built with ❤️ by [21no.de](https://21no.de)

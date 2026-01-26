@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>fast-di - Modern TypeScript Dependency Injection</title>
+    <title>fast-injection - Modern TypeScript Dependency Injection</title>
     <meta
       name="description"
       content="Blazing fast, lightweight TypeScript Dependency Injection optimized for Bun runtime. Sub-microsecond resolution, type-safe, zero dependencies."
     />
     <meta name="keywords" content="dependency injection, typescript, bun, ioc, container, di, fast, lightweight" />
-    <meta property="og:title" content="fast-di - Modern TypeScript Dependency Injection" />
+    <meta property="og:title" content="fast-injection - Modern TypeScript Dependency Injection" />
     <meta
       property="og:description"
       content="Blazing fast, lightweight TypeScript Dependency Injection optimized for Bun runtime."
@@ -31,22 +31,22 @@
       <canvas id="matrix-canvas"></canvas>
       <nav class="nav">
         <div class="nav-logo">
-          <img src="logo.svg" alt="fast-di logo" class="logo-img" />
-          <span class="logo-text">fast-di</span>
+          <img src="logo.svg" alt="fast-injection logo" class="logo-img" />
+          <span class="logo-text">fast-injection</span>
         </div>
         <div class="nav-links">
           <a href="#features">Features</a>
           <a href="#getting-started">Get Started</a>
           <a href="#performance">Performance</a>
-          <a href="https://github.com/BackendStack21/fast-di" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/BackendStack21/fast-injection" target="_blank" rel="noopener">GitHub</a>
         </div>
       </nav>
 
       <div class="hero-content">
         <div class="hero-logo">
-          <img src="logo.svg" alt="fast-di" class="hero-logo-img" />
+          <img src="logo.svg" alt="fast-injection" class="hero-logo-img" />
         </div>
-        <h1 class="hero-title">fast-di</h1>
+        <h1 class="hero-title">fast-injection</h1>
         <p class="hero-subtitle">Modern TypeScript Dependency Injection</p>
         <p class="hero-description">
           Blazing fast, lightweight DI container optimized for <strong>Bun</strong> runtime.<br />
@@ -54,7 +54,7 @@
         </p>
         <div class="hero-actions">
           <a href="#getting-started" class="btn btn-primary">Get Started</a>
-          <a href="https://github.com/BackendStack21/fast-di" class="btn btn-secondary" target="_blank" rel="noopener">
+          <a href="https://github.com/BackendStack21/fast-injection" class="btn btn-secondary" target="_blank" rel="noopener">
             <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor">
               <path
                 d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
@@ -64,7 +64,7 @@
           </a>
         </div>
         <div class="hero-install">
-          <code class="install-code"> <span class="install-prefix">$</span> bun add fast-di </code>
+          <code class="install-code"> <span class="install-prefix">$</span> bun add fast-injection </code>
           <button class="copy-btn" onclick="copyInstall()" title="Copy to clipboard">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -79,7 +79,7 @@
 
     <!-- Features Section -->
     <section id="features" class="features">
-      <h2 class="section-title">Why fast-di?</h2>
+      <h2 class="section-title">Why fast-injection?</h2>
       <div class="features-grid">
         <div class="feature-card">
           <div class="feature-icon">⚡</div>
@@ -127,7 +127,7 @@
     <!-- Getting Started Section -->
     <section id="getting-started" class="getting-started">
       <h2 class="section-title">Getting Started</h2>
-      <p class="section-description">Start using fast-di in minutes with our intuitive API.</p>
+      <p class="section-description">Start using fast-injection in minutes with our intuitive API.</p>
 
       <div class="code-tabs">
         <div class="tab-buttons">
@@ -149,8 +149,8 @@
             </div>
             <pre
               id="decorators-code"
-            ><code><span class="keyword">import</span> { Container } <span class="keyword">from</span> <span class="string">"fast-di"</span>;
-<span class="keyword">import</span> { singleton, inject } <span class="keyword">from</span> <span class="string">"fast-di/decorators"</span>;
+            ><code><span class="keyword">import</span> { Container } <span class="keyword">from</span> <span class="string">"fast-injection"</span>;
+<span class="keyword">import</span> { singleton, inject } <span class="keyword">from</span> <span class="string">"fast-injection/decorators"</span>;
 
 <span class="comment">// Define services with decorators</span>
 <span class="decorator">@singleton()</span>
@@ -190,7 +190,7 @@ container.<span class="method">register</span>(<span class="class">UserService</
             </div>
             <pre
               id="functional-code"
-            ><code><span class="keyword">import</span> { Container, Lifetime } <span class="keyword">from</span> <span class="string">"fast-di"</span>;
+            ><code><span class="keyword">import</span> { Container, Lifetime } <span class="keyword">from</span> <span class="string">"fast-injection"</span>;
 
 <span class="comment">// Define your services</span>
 <span class="keyword">class</span> <span class="class">Config</span> {
@@ -232,7 +232,7 @@ container.<span class="method">register</span>(<span class="class">ApiClient</sp
             </div>
             <pre
               id="lifecycle-code"
-            ><code><span class="keyword">import</span> { Container } <span class="keyword">from</span> <span class="string">"fast-di"</span>;
+            ><code><span class="keyword">import</span> { Container } <span class="keyword">from</span> <span class="string">"fast-injection"</span>;
 
 <span class="keyword">class</span> <span class="class">Cache</span> {
   <span class="keyword">private</span> store = <span class="keyword">new</span> <span class="class">Map</span>&lt;<span class="type">string</span>, <span class="type">string</span>&gt;();
@@ -333,22 +333,22 @@ cache.<span class="method">set</span>(<span class="string">"foo"</span>, <span c
 
       <div class="docs-grid">
         <a
-          href="https://github.com/BackendStack21/fast-di/blob/main/QUICKSTART.md"
+          href="https://github.com/BackendStack21/fast-injection/blob/main/QUICKSTART.md"
           class="doc-card"
           target="_blank"
           rel="noopener"
         >
           <div class="doc-icon">📄</div>
           <h3>Quick Start Guide</h3>
-          <p>Get up and running with fast-di in minutes. Perfect for beginners.</p>
+          <p>Get up and running with fast-injection in minutes. Perfect for beginners.</p>
         </a>
-        <a href="https://github.com/BackendStack21/fast-di/tree/main/examples" class="doc-card" target="_blank" rel="noopener">
+        <a href="https://github.com/BackendStack21/fast-injection/tree/main/examples" class="doc-card" target="_blank" rel="noopener">
           <div class="doc-icon">📘</div>
           <h3>Examples</h3>
           <p>Comprehensive examples covering all features and use cases.</p>
         </a>
         <a
-          href="https://github.com/BackendStack21/fast-di/blob/main/SECURITY.md"
+          href="https://github.com/BackendStack21/fast-injection/blob/main/SECURITY.md"
           class="doc-card"
           target="_blank"
           rel="noopener"
@@ -363,9 +363,9 @@ cache.<span class="method">set</span>(<span class="string">"foo"</span>, <span c
     <!-- CTA Section -->
     <section class="cta">
       <h2>Ready to supercharge your DI?</h2>
-      <p>Join developers building faster, more maintainable applications with fast-di.</p>
+      <p>Join developers building faster, more maintainable applications with fast-injection.</p>
       <div class="cta-actions">
-        <a href="https://github.com/BackendStack21/fast-di" class="btn btn-primary" target="_blank" rel="noopener">
+        <a href="https://github.com/BackendStack21/fast-injection" class="btn btn-primary" target="_blank" rel="noopener">
           <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor">
             <path
               d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
@@ -373,7 +373,7 @@ cache.<span class="method">set</span>(<span class="string">"foo"</span>, <span c
           </svg>
           Star on GitHub
         </a>
-        <a href="https://www.npmjs.com/package/fast-di" class="btn btn-secondary" target="_blank" rel="noopener">
+        <a href="https://www.npmjs.com/package/fast-injection" class="btn btn-secondary" target="_blank" rel="noopener">
           View on npm
         </a>
       </div>
@@ -383,13 +383,13 @@ cache.<span class="method">set</span>(<span class="string">"foo"</span>, <span c
     <footer class="footer">
       <div class="footer-content">
         <div class="footer-logo">
-          <img src="logo.svg" alt="fast-di" class="footer-logo-img" />
-          <span>fast-di</span>
+          <img src="logo.svg" alt="fast-injection" class="footer-logo-img" />
+          <span>fast-injection</span>
         </div>
         <div class="footer-links">
-          <a href="https://github.com/BackendStack21/fast-di" target="_blank" rel="noopener">GitHub</a>
-          <a href="https://www.npmjs.com/package/fast-di" target="_blank" rel="noopener">npm</a>
-          <a href="https://github.com/BackendStack21/fast-di/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+          <a href="https://github.com/BackendStack21/fast-injection" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://www.npmjs.com/package/fast-injection" target="_blank" rel="noopener">npm</a>
+          <a href="https://github.com/BackendStack21/fast-injection/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
         </div>
       </div>
       <div class="footer-bottom">

@@ -1,6 +1,6 @@
-# fast-di Examples
+# fast-injection Examples
 
-This directory contains comprehensive examples demonstrating all features of fast-di.
+This directory contains comprehensive examples demonstrating all features of fast-injection.
 
 ## Running Examples
 

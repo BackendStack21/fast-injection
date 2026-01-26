@@ -3,7 +3,7 @@
 Modern, lightweight TypeScript Dependency Injection optimized for Bun runtime.
 
 [![npm version](https://img.shields.io/npm/v/fast-injection)](https://www.npmjs.com/package/fast-injection)
-[![Bundle Size](https://img.shields.io/badge/bundle%20size-%3C5KB-brightgreen)](https://github.com/21no-de/fast-injection)
+[![Bundle Size](https://img.shields.io/badge/bundle%20size-%3C10KB-brightgreen)](https://github.com/21no-de/fast-injection)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-1.0%2B-orange)](https://bun.sh)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -13,7 +13,7 @@ Modern, lightweight TypeScript Dependency Injection optimized for Bun runtime.
 ## Features
 
 - ⚡ **Blazing Fast**: Sub-microsecond dependency resolution
-- 🪶 **Lightweight**: < 5KB minified + gzipped
+- 🪶 **Lightweight**: < 10KB minified + gzipped
 - 🔒 **Type-Safe**: Full TypeScript support with inference
 - 🛡️ **Secure**: Protected against prototype pollution, memory leaks, ReDoS, and DoS attacks
 - 🎯 **Zero Dependencies**: No production dependencies
@@ -294,25 +294,27 @@ bun run bench
 Fast-Injection implements comprehensive security measures to protect against common vulnerabilities. See [SECURITY.md](SECURITY.md) for detailed information.
 
 **Key Features:**
+
 - 🛡️ **Prototype Pollution Prevention**: Token validation rejects dangerous property names
 - 🔄 **Async Promise Safety**: Failed resolutions tracked with TTL to prevent memory leaks
 - 🧹 **Memory Management**: Explicit cleanup utilities for dynamic classes
 - ⚡ **ReDoS Prevention**: Removed unsafe regex patterns
 
 **Quick Example:**
+
 ```typescript
 // ❌ Don't use reserved token names
-container.register('__proto__', MyService); // Throws RegistrationError
+container.register("__proto__", MyService); // Throws RegistrationError
 
 // ✅ Use safe, descriptive tokens
-container.register('myService', MyService);
+container.register("myService", MyService);
 
 // ✅ Clean up dynamic classes
 clearDecoratorMetadata(DynamicService);
 
 // ✅ Always dispose containers when done
 await container.dispose();
-````
+```
 
 For comprehensive security documentation, threat model, and best practices, see [SECURITY.md](SECURITY.md).
 

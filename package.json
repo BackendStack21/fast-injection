@@ -29,7 +29,7 @@
     "clean": "rm -rf dist",
     "build": "bun run clean && bun build:types && bun build:bundle",
     "build:types": "tsc --emitDeclarationOnly",
-    "build:bundle": "bun build src/index.ts --outdir dist --target bun --format esm --minify",
+    "build:bundle": "bun build src/index.ts src/decorators/index.ts src/testing/index.ts --outdir dist --target bun --format esm",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",

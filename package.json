@@ -1,6 +1,6 @@
 {
   "name": "fast-injection",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "description": "Modern, lightweight TypeScript Dependency Injection optimized for Bun",
   "type": "module",
   "main": "./dist/index.js",
@@ -58,12 +58,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/21no-de/fast-injection.git"
+    "url": "git+https://github.com/BackendStack21/fast-injection.git"
   },
   "bugs": {
-    "url": "https://github.com/21no-de/fast-injection/issues"
+    "url": "https://github.com/BackendStack21/fast-injection/issues"
   },
-  "homepage": "https://github.com/21no-de/fast-injection#readme",
+  "homepage": "https://fast-injection.21no.de/",
   "devDependencies": {
     "@types/bun": "latest",
     "prettier": "^3.2.4",

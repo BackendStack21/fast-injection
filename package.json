@@ -70,7 +70,7 @@
     "typescript": "^5.3.3"
   },
   "peerDependencies": {
-    "typescript": ">=5.0.0"
+    "typescript": ">=5.2.0"
   },
   "engines": {
     "bun": ">=1.0.0"

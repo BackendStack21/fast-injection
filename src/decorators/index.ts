@@ -163,6 +163,36 @@ export function inject(token: Token): ParameterDecorator {
 }
 
 /**
+ * Mark a constructor parameter as optional.
+ *
+ * When the parameter's token is not registered, `undefined` is injected instead
+ * of throwing. Errors raised while building a registered dependency still throw.
+ *
+ * @returns Parameter decorator that marks the dependency as optional
+ *
+ * @example
+ * ```typescript
+ * class UserService {
+ *   constructor(
+ *     @inject(Database) private db: Database,
+ *     @inject(Cache) @optional() private cache?: Cache,
+ *   ) {}
+ * }
+ *
+ * container.register(Database);
+ * container.register(UserService);
+ * container.resolve(UserService); // cache is undefined
+ * ```
+ */
+export function optional(): ParameterDecorator {
+  return function (target: Object, _propertyKey: string | symbol | undefined, parameterIndex: number) {
+    const flags = getMetadata(METADATA_KEYS.OPTIONAL, target) || [];
+    flags[parameterIndex] = true;
+    defineMetadata(METADATA_KEYS.OPTIONAL, flags, target);
+  };
+}
+
+/**
  * Mark a class as a singleton service with a single shared instance.
  *
  * Singleton services are instantiated once and reused for all subsequent resolutions.

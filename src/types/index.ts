@@ -82,7 +82,46 @@ export type AbstractConstructor<T = any> = abstract new (...args: any[]) => T;
  * const db = container.resolve<Database>(DATABASE_TOKEN);
  * ```
  */
-export type Token<T = any> = string | symbol | Constructor<T>;
+export type Token<T = any> = string | symbol | Constructor<T> | AbstractConstructor<T> | InjectionToken<T>;
+
+/**
+ * A type-safe injection token.
+ *
+ * At runtime it is a plain unique `symbol`; at compile time it carries the type of
+ * the service it identifies, so `container.resolve(token)` is inferred without
+ * passing a type argument. Create one with {@link createToken}.
+ */
+export type InjectionToken<T> = symbol & { readonly __type?: T };
+
+/**
+ * Create a type-safe, collision-free injection token.
+ *
+ * Ideal for interfaces, primitives and configuration objects, which have no
+ * runtime constructor to use as a token.
+ *
+ * @template T - The type of the service identified by the token
+ * @param description - Human readable name, used in error messages
+ *
+ * @example
+ * ```typescript
+ * interface Config { apiUrl: string }
+ * const CONFIG = createToken<Config>("config");
+ *
+ * container.registerValue(CONFIG, { apiUrl: "https://api.example.com" });
+ * const config = container.resolve(CONFIG); // inferred as Config
+ * ```
+ */
+export function createToken<T>(description: string): InjectionToken<T> {
+  return Symbol(description) as InjectionToken<T>;
+}
+
+/**
+ * A constructor dependency declared explicitly at registration time.
+ *
+ * Either a bare token, or a descriptor that marks the dependency as optional
+ * (resolved to `undefined` when the token is not registered).
+ */
+export type Dependency<T = any> = Token<T> | { token: Token<T>; optional?: boolean };
 
 /**
  * Service lifetime options that control instance creation and caching strategies.
@@ -288,6 +327,22 @@ export interface RegistrationOptions {
    * @default false
    */
   replace?: boolean;
+
+  /**
+   * Explicit constructor dependencies, in parameter order.
+   *
+   * Enables constructor injection without decorators or `reflect-metadata`.
+   * Takes precedence over `@inject` and emitted `design:paramtypes` metadata.
+   * Ignored for factories and values.
+   *
+   * @example
+   * ```typescript
+   * container.register(UserService, {
+   *   dependencies: [Database, "config", { token: Cache, optional: true }],
+   * });
+   * ```
+   */
+  dependencies?: Dependency[];
 }
 
 /**
@@ -385,6 +440,45 @@ export interface ServiceDefinition<T = any> {
    * For values: always empty
    */
   dependencies: Token[];
+
+  /**
+   * Per-parameter optional flags, aligned with `dependencies`.
+   * An optional dependency resolves to `undefined` when its token is not registered.
+   */
+  optional?: boolean[];
+
+  /**
+   * True when `target` is a pre-built value that must be returned as-is
+   * (even if it happens to be a function or a class).
+   */
+  isValue?: boolean;
+
+  /**
+   * True when this definition is allowed to replace an existing registration.
+   */
+  replace?: boolean;
+}
+
+/**
+ * A problem found by {@link IContainer.validate}.
+ */
+export interface ValidationIssue {
+  /**
+   * - `missing`: a required constructor dependency is not registered
+   * - `circular`: constructor dependencies form a cycle
+   * - `captive`: a singleton depends (directly or through transients) on a scoped
+   *   service, which would pin one scoped instance for the container's lifetime
+   */
+  type: "missing" | "circular" | "captive";
+
+  /** The service whose registration is faulty */
+  token: Token;
+
+  /** Dependency path from `token` to the offending dependency */
+  path: Token[];
+
+  /** Human readable description */
+  message: string;
 }
 
 /**
@@ -635,7 +729,7 @@ export interface IContainer {
    * container.registerValue('NODE_ENV', process.env.NODE_ENV || 'development');
    * ```
    */
-  registerValue<T>(token: Token<T>, value: T): void;
+  registerValue<T>(token: Token<T>, value: T, options?: RegistrationOptions): void;
 
   /**
    * Register a synchronous factory function.
@@ -834,6 +928,67 @@ export interface IContainer {
   resolveAll<T>(token: Token<T>): T[];
 
   /**
+   * Register multiple implementations under the same token.
+   * Resolve them with `resolveAll()` / `resolveAllAsync()`.
+   */
+  registerAll<T>(token: Token<T>, implementations: Constructor<T>[], options?: RegistrationOptions): void;
+
+  /**
+   * Resolve all implementations registered with `registerAll()`, awaiting async
+   * `onInit` hooks.
+   */
+  resolveAllAsync<T>(token: Token<T>): Promise<T[]>;
+
+  /**
+   * Resolve a service, or return `undefined` when the token is not registered.
+   *
+   * Only the absence of the requested token is tolerated: errors raised while
+   * building a registered service (including its own missing dependencies) still throw.
+   *
+   * @example
+   * ```typescript
+   * const cache = container.tryResolve(Cache) ?? new InMemoryCache();
+   * ```
+   */
+  tryResolve<T>(token: Token<T>): T | undefined;
+
+  /**
+   * Async counterpart of {@link IContainer.tryResolve}.
+   */
+  tryResolveAsync<T>(token: Token<T>): Promise<T | undefined>;
+
+  /**
+   * Verify the dependency graph without instantiating anything.
+   *
+   * Checks every registration visible from this container for missing
+   * dependencies, circular dependencies and captive dependencies (a singleton
+   * depending on a scoped service). Factories are opaque and are not inspected.
+   *
+   * Call it once at startup to fail fast instead of at first resolution.
+   *
+   * @throws {ValidationError} listing every issue found
+   *
+   * @example
+   * ```typescript
+   * container.register(UserService, { dependencies: [Database] });
+   * container.validate(); // throws: UserService is missing dependency Database
+   * ```
+   */
+  validate(): void;
+
+  /**
+   * Explicit resource management support. Equivalent to `dispose()`.
+   *
+   * @example
+   * ```typescript
+   * await using scope = container.createScope();
+   * scope.resolve(RequestHandler).handle(req);
+   * // scope is disposed automatically at the end of the block
+   * ```
+   */
+  [Symbol.asyncDispose](): Promise<void>;
+
+  /**
    * Create a child scoped container that inherits parent registrations.
    *
    * Child containers have their own scope for Scoped-lifetime services while
@@ -950,4 +1105,5 @@ export const METADATA_KEYS = {
   INJECT: Symbol("inject"),
   LIFETIME: Symbol("lifetime"),
   DEPENDENCIES: Symbol("dependencies"),
+  OPTIONAL: Symbol("optional"),
 } as const;

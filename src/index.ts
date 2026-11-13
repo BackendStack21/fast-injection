@@ -15,9 +15,12 @@ export type {
   RegistrationOptions,
   Lifecycle,
   IContainer,
+  InjectionToken,
+  Dependency,
+  ValidationIssue,
 } from "./types/index.js";
 
-export { Lifetime, METADATA_KEYS } from "./types/index.js";
+export { Lifetime, METADATA_KEYS, createToken } from "./types/index.js";
 
 // Error exports
 export {
@@ -26,4 +29,5 @@ export {
   UnregisteredServiceError,
   RegistrationError,
   ResolutionError,
+  ValidationError,
 } from "./errors/index.js";

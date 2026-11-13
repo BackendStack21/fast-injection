@@ -7,24 +7,14 @@ const projectRoot = join(import.meta.dir, "..");
 
 describe("Package build", () => {
   test("shares decorator metadata between package entrypoints", async () => {
-    const packageRoot = await mkdtemp(
-      join(tmpdir(), "fast-injection-package-"),
-    );
-    const consumerRoot = await mkdtemp(
-      join(tmpdir(), "fast-injection-consumer-"),
-    );
+    const packageRoot = await mkdtemp(join(tmpdir(), "fast-injection-package-"));
+    const consumerRoot = await mkdtemp(join(tmpdir(), "fast-injection-consumer-"));
 
     try {
-      await cp(
-        join(projectRoot, "package.json"),
-        join(packageRoot, "package.json"),
-      );
+      await cp(join(projectRoot, "package.json"), join(packageRoot, "package.json"));
       await Bun.$`bun build ${join(projectRoot, "src/index.ts")} ${join(projectRoot, "src/decorators/index.ts")} ${join(projectRoot, "src/testing/index.ts")} --outdir ${join(packageRoot, "dist")} --target bun --format esm --splitting`.quiet();
       await mkdir(join(consumerRoot, "node_modules"));
-      await symlink(
-        packageRoot,
-        join(consumerRoot, "node_modules", "fast-injection"),
-      );
+      await symlink(packageRoot, join(consumerRoot, "node_modules", "fast-injection"));
       await writeFile(
         join(consumerRoot, "tsconfig.json"),
         JSON.stringify({ compilerOptions: { experimentalDecorators: true } }),

@@ -380,6 +380,7 @@ async function handleRequest(req: Request) {
 
 ### What's New / Fixed
 
+- Decorators imported from `fast-injection/decorators` now work with a container imported from `fast-injection` in the published package (the entry points share one metadata store).
 - `replace: true` now works and drops the cached instance of the replaced registration; `registerValue(token, value, { replace: true })` is accepted.
 - Factories receive a fully functional container (`has`, `createScope`, `tryResolve`, ...).
 - `registerAll` with singleton lifetime keeps one instance per implementation; `resolveAllAsync()` and `registerAll` are part of `IContainer`.

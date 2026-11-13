@@ -1,12 +1,6 @@
 import { describe, test, expect, beforeEach } from "bun:test";
 import { Container, Lifetime } from "../src/index.js";
-import {
-  injectable,
-  singleton,
-  transient,
-  scoped,
-  inject,
-} from "../src/decorators/index.js";
+import { injectable, singleton, transient, scoped, inject } from "../src/decorators/index.js";
 
 describe("Decorator Integration", () => {
   let container: Container;
@@ -335,11 +329,7 @@ describe("Decorator Integration", () => {
       container.register(Logger);
       container.register(Database);
       container.registerFactory(ComplexService, (c) => {
-        return new ComplexService(
-          c.resolve(Config),
-          c.resolve(Logger),
-          c.resolve(Database),
-        );
+        return new ComplexService(c.resolve(Config), c.resolve(Logger), c.resolve(Database));
       });
 
       const service = container.resolve(ComplexService);
@@ -365,13 +355,9 @@ describe("Decorator Integration", () => {
 
       container.register(ConsoleLogger);
       // Factory needs explicit lifetime; decorator metadata applies only to register()
-      container.registerFactory(
-        UserService,
-        (c) => new UserService(c.resolve(ConsoleLogger)),
-        {
-          lifetime: Lifetime.Singleton,
-        },
-      );
+      container.registerFactory(UserService, (c) => new UserService(c.resolve(ConsoleLogger)), {
+        lifetime: Lifetime.Singleton,
+      });
 
       const service1 = container.resolve(UserService);
       const service2 = container.resolve(UserService);

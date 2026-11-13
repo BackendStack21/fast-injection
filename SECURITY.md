@@ -100,6 +100,8 @@ clearDecoratorMetadata(DynamicService);
 
 **Implementation**: [Decorators](src/decorators/index.ts) provide `clearDecoratorMetadata()` function to manually remove stored metadata.
 
+**Transient instances**: transient services that define `onDispose` are tracked with weak references. They are disposed with the container while they are still alive, but the container no longer keeps every one of them in memory until disposal. A transient that was garbage collected before the container is disposed does not get `onDispose` called, so services that own resources which must be released should be scoped or singleton, or be disposed by their consumer.
+
 ---
 
 ### 4. ReDoS Prevention
@@ -284,7 +286,10 @@ class RequestContext {
 app.use((req, res, next) => {
   // Create isolated scope for this request
   req.scope = container.createScope();
-  req.scope.registerValue("requestContext", new RequestContext(req.id, req.user?.id));
+  req.scope.registerValue(
+    "requestContext",
+    new RequestContext(req.id, req.user?.id),
+  );
 
   // Clean up after request
   res.on("finish", async () => {

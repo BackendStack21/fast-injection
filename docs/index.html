@@ -49,7 +49,8 @@
         <h1 class="hero-title">fast-injection</h1>
         <p class="hero-subtitle">Modern TypeScript Dependency Injection</p>
         <p class="hero-description">
-          Blazing fast, lightweight DI container optimized for <strong>Bun</strong> runtime.<br />
+          Blazing fast, lightweight DI container optimized for
+          <strong>Bun</strong> runtime.<br />
           Sub-microsecond resolution with full type safety.
         </p>
         <div class="hero-actions">
@@ -89,7 +90,10 @@
         <div class="feature-card">
           <div class="feature-icon">⚡</div>
           <h3>Blazing Fast</h3>
-          <p>Sub-microsecond dependency resolution. Up to <strong>26M ops/sec</strong> for cached singletons.</p>
+          <p>
+            Sub-microsecond dependency resolution. Up to
+            <strong>89M ops/sec</strong> for cached singletons.
+          </p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🪶</div>
@@ -114,7 +118,35 @@
         <div class="feature-card">
           <div class="feature-icon">🎨</div>
           <h3>Flexible API</h3>
-          <p>Choose your style: decorators, functional, or imperative. It's your choice.</p>
+          <p>Choose your style: decorators, explicit dependencies, factories, or imperative. It's your choice.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🧩</div>
+          <h3>Decorator-Free Injection</h3>
+          <p>
+            Declare constructor <strong>dependencies</strong> at registration. No decorators or reflect-metadata needed.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🏷️</div>
+          <h3>Typed Tokens</h3>
+          <p>
+            <strong>createToken&lt;T&gt;()</strong> for interfaces and config. <code>resolve()</code> is inferred, with
+            optional resolution via <code>tryResolve()</code>.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">✅</div>
+          <h3>Graph Validation</h3>
+          <p>
+            <code>validate()</code> catches missing, circular and captive dependencies at startup, without instantiating
+            anything.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🧹</div>
+          <h3>await using Scopes</h3>
+          <p>Scopes implement <code>Symbol.asyncDispose</code> and are disposed automatically at block end.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🧪</div>
@@ -124,7 +156,10 @@
         <div class="feature-card">
           <div class="feature-icon">🔥</div>
           <h3>Bun Optimized</h3>
-          <p>Native performance optimizations for the <strong>Bun</strong> runtime.</p>
+          <p>
+            Native performance optimizations for the
+            <strong>Bun</strong> runtime.
+          </p>
         </div>
       </div>
     </section>
@@ -138,6 +173,8 @@
         <div class="tab-buttons">
           <button class="tab-btn active" data-tab="decorators">Decorators</button>
           <button class="tab-btn" data-tab="functional">Functional</button>
+          <button class="tab-btn" data-tab="explicit">Explicit DI</button>
+          <button class="tab-btn" data-tab="scopes">Scopes</button>
           <button class="tab-btn" data-tab="lifecycle">Lifecycle</button>
         </div>
 
@@ -224,6 +261,84 @@ container.<span class="method">register</span>(<span class="class">ApiClient</sp
           </div>
         </div>
 
+        <div class="tab-content" id="explicit">
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-lang">TypeScript</span>
+              <button class="copy-btn" onclick="copyCode('explicit-code')" title="Copy to clipboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+            <pre
+              id="explicit-code"
+            ><code><span class="keyword">import</span> { Container, Lifetime, createToken } <span class="keyword">from</span> <span class="string">"fast-injection"</span>;
+
+<span class="keyword">interface</span> <span class="class">Config</span> { apiUrl: <span class="type">string</span> }
+<span class="keyword">const</span> CONFIG = <span class="method">createToken</span>&lt;<span class="class">Config</span>&gt;(<span class="string">"config"</span>);
+
+<span class="comment">// Plain classes: no decorators, no reflect-metadata</span>
+<span class="keyword">class</span> <span class="class">Database</span> {}
+<span class="keyword">class</span> <span class="class">Cache</span> {}
+<span class="keyword">class</span> <span class="class">UserService</span> {
+  <span class="keyword">constructor</span>(<span class="keyword">private</span> db: <span class="class">Database</span>, <span class="keyword">private</span> config: <span class="class">Config</span>, <span class="keyword">private</span> cache?: <span class="class">Cache</span>) {}
+}
+
+<span class="keyword">const</span> container = <span class="keyword">new</span> <span class="class">Container</span>();
+container.<span class="method">register</span>(<span class="class">Database</span>, { lifetime: Lifetime.<span class="property">Singleton</span> });
+container.<span class="method">registerValue</span>(CONFIG, { apiUrl: <span class="string">"https://api.example.com"</span> });
+
+<span class="comment">// Declare dependencies in constructor order; Cache is optional</span>
+container.<span class="method">register</span>(<span class="class">UserService</span>, {
+  dependencies: [<span class="class">Database</span>, CONFIG, { token: <span class="class">Cache</span>, optional: <span class="keyword">true</span> }],
+});
+
+<span class="comment">// Fail fast at startup: missing, circular and captive dependencies</span>
+container.<span class="method">validate</span>();
+
+<span class="comment">// Typed tokens are inferred, no type argument needed</span>
+<span class="keyword">const</span> config = container.<span class="method">resolve</span>(CONFIG); <span class="comment">// Config</span>
+<span class="keyword">const</span> service = container.<span class="method">resolve</span>(<span class="class">UserService</span>);
+<span class="keyword">const</span> cache = container.<span class="method">tryResolve</span>(<span class="class">Cache</span>); <span class="comment">// undefined if not registered</span></code></pre>
+          </div>
+        </div>
+
+        <div class="tab-content" id="scopes">
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-lang">TypeScript</span>
+              <button class="copy-btn" onclick="copyCode('scopes-code')" title="Copy to clipboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+            <pre
+              id="scopes-code"
+            ><code><span class="keyword">import</span> { Container, Lifetime } <span class="keyword">from</span> <span class="string">"fast-injection"</span>;
+
+<span class="keyword">class</span> <span class="class">RequestContext</span> {
+  <span class="method">onDispose</span>() {
+    console.<span class="method">log</span>(<span class="string">"request finished"</span>);
+  }
+}
+
+<span class="keyword">const</span> container = <span class="keyword">new</span> <span class="class">Container</span>();
+container.<span class="method">register</span>(<span class="class">RequestContext</span>, { lifetime: Lifetime.<span class="property">Scoped</span> });
+
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="method">handleRequest</span>() {
+  <span class="comment">// The scope is disposed automatically when the block exits</span>
+  <span class="keyword">await</span> <span class="keyword">using</span> scope = container.<span class="method">createScope</span>();
+
+  <span class="keyword">const</span> ctx = scope.<span class="method">resolve</span>(<span class="class">RequestContext</span>);
+  <span class="comment">// ... handle the request</span>
+} <span class="comment">// scope.dispose() runs here, even if the handler throws</span></code></pre>
+          </div>
+        </div>
+
         <div class="tab-content" id="lifecycle">
           <div class="code-block">
             <div class="code-header">
@@ -288,45 +403,47 @@ cache.<span class="method">set</span>(<span class="string">"foo"</span>, <span c
           <tbody>
             <tr class="highlight">
               <td><span class="op-icon">🚀</span> Singleton (cached)</td>
-              <td><strong>~26M</strong> ops/sec</td>
-              <td>0.038µs</td>
+              <td><strong>~89M</strong> ops/sec</td>
+              <td>0.011µs</td>
             </tr>
             <tr>
               <td><span class="op-icon">📦</span> Scoped (cached)</td>
-              <td>~25M ops/sec</td>
-              <td>0.039µs</td>
-            </tr>
-            <tr>
-              <td><span class="op-icon">🔨</span> Create scope</td>
-              <td>~21M ops/sec</td>
-              <td>0.048µs</td>
-            </tr>
-            <tr>
-              <td><span class="op-icon">💾</span> Value retrieval</td>
-              <td>~19M ops/sec</td>
-              <td>0.052µs</td>
+              <td>~37M ops/sec</td>
+              <td>0.027µs</td>
             </tr>
             <tr>
               <td><span class="op-icon">🔄</span> Transient</td>
-              <td>~11M ops/sec</td>
-              <td>0.091µs</td>
+              <td>~36M ops/sec</td>
+              <td>0.027µs</td>
+            </tr>
+            <tr>
+              <td><span class="op-icon">💾</span> Value retrieval</td>
+              <td>~31M ops/sec</td>
+              <td>0.032µs</td>
+            </tr>
+            <tr>
+              <td><span class="op-icon">🔨</span> Create scope</td>
+              <td>~28M ops/sec</td>
+              <td>0.036µs</td>
             </tr>
             <tr>
               <td><span class="op-icon">🏭</span> Factory</td>
-              <td>~7.8M ops/sec</td>
-              <td>0.13µs</td>
+              <td>~24M ops/sec</td>
+              <td>0.042µs</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <p class="benchmark-note">* Benchmarks run on Apple M2 Pro with Bun runtime</p>
+      <p class="benchmark-note">
+        * Measured with <code>bun run bench</code> on Bun 1.4.4, macOS arm64. Results vary by machine.
+      </p>
 
       <div class="performance-tip">
         <div class="tip-icon">💡</div>
         <div class="tip-content">
           <strong>Performance Tip:</strong> Use <code>@singleton()</code> for services like database connections,
-          configuration, and loggers. Singleton resolution is <strong>98% faster</strong> than transient.
+          configuration, and loggers. Cached singleton resolution is about <strong>2.4x faster</strong> than transient.
         </div>
       </div>
     </section>
@@ -410,7 +527,10 @@ cache.<span class="method">set</span>(<span class="string">"foo"</span>, <span c
         </div>
       </div>
       <div class="footer-bottom">
-        <p>© 2026 <a href="https://21no.de" target="_blank" rel="noopener">21no.de</a>. Built with ❤️</p>
+        <p>
+          © 2026
+          <a href="https://21no.de" target="_blank" rel="noopener">21no.de</a>. Built with ❤️
+        </p>
       </div>
     </footer>
 

@@ -220,6 +220,11 @@ function initMatrixRain() {
     'onInit() { console.log("initialized"); }',
     "onDispose() { this.cleanup(); }",
     "factory: (c) => new Service(c.resolve(Dep))",
+    "container.register(UserService, { dependencies: [Database] });",
+    'const CONFIG = createToken<Config>("config");',
+    "container.validate();",
+    "const cache = container.tryResolve(Cache);",
+    "await using scope = container.createScope();",
   ];
 
   function resize() {

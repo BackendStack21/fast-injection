@@ -574,7 +574,9 @@ section {
     color: var(--color-text);
 }
 
-.tip-content code {
+.tip-content code,
+.feature-card code,
+.benchmark-note code {
     background: rgba(99, 102, 241, 0.2);
     padding: 2px 8px;
     border-radius: 4px;

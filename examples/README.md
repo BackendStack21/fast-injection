@@ -165,6 +165,56 @@ Demonstrates advanced lifecycle hook patterns, including async `onInit`/`onDispo
 - Root container disposal cleans up singleton resources (including async ones)
 - Order of disposal and resource cleanup
 
+#### 12. Explicit Dependencies
+
+**File:** `12-explicit-dependencies.ts`
+
+Decorator-free constructor injection: declare dependencies at registration time.
+
+**Key Concepts:**
+
+- `register(Class, { dependencies: [...] })` - no decorators or `reflect-metadata`
+- Class, string and symbol tokens as dependencies
+- `{ token, optional: true }` for optional dependencies
+- Takes precedence over `@inject`
+
+#### 13. Typed Tokens and Optional Resolution
+
+**File:** `13-typed-tokens-optional.ts`
+
+Type-safe tokens for interfaces and configuration, and resolving services that may not be registered.
+
+**Key Concepts:**
+
+- `createToken<T>(description)` - `resolve(TOKEN)` is inferred as `T`
+- `tryResolve()` / `tryResolveAsync()` return `undefined` for unregistered tokens
+- Optional explicit dependencies with typed tokens
+
+#### 14. Container Validation
+
+**File:** `14-validation.ts`
+
+Verify the dependency graph at startup, without instantiating anything.
+
+**Key Concepts:**
+
+- `container.validate()` throws `ValidationError`
+- `error.issues` with `type` of `missing`, `circular` or `captive`
+- Captive dependency: a singleton depending on a scoped service
+- Only constructor registrations are checked (factories are opaque); tokens registered later in request scopes need validating from a scope or optional dependencies
+
+#### 15. Explicit Resource Management
+
+**File:** `15-await-using.ts`
+
+Dispose scopes automatically with `await using`.
+
+**Key Concepts:**
+
+- Containers implement `Symbol.asyncDispose` (TypeScript 5.2+, `lib` including `ESNext`)
+- `await using scope = container.createScope();` disposes at block end, even on errors
+- Per-request scopes without `try/finally`
+
 #### Basic Example
 
 **File:** `basic.ts`
@@ -186,7 +236,7 @@ Advanced factory patterns and configurations.
 ## Key Takeaways
 
 1. **Simple Registration:** Use `register()` for classes without dependencies
-2. **Factory Registration:** Use `registerFactory()` for classes with dependencies
+2. **Dependencies:** Use `register(Class, { dependencies: [...] })` (no decorators needed), `@inject`, or `registerFactory()` for manual wiring
 3. **Lifetimes:**
    - `Singleton` - One instance per container
    - `Transient` - New instance every time
@@ -196,14 +246,17 @@ Advanced factory patterns and configurations.
 6. **Async:** Use `registerAsyncFactory()` and `resolveAsync()` for async initialization
 7. **Lifecycle:** Implement `onInit()` and `onDispose()` for resource management
 8. **Global Container:** Use `getGlobalContainer()` for application-wide singleton container access
+9. **Typed Tokens:** Use `createToken<T>()` for interfaces and configuration
+10. **Validation:** Call `container.validate()` at startup to catch missing, circular and captive dependencies
+11. **Scopes:** Use `await using scope = container.createScope()` for automatic disposal
 
 ## Tips
 
-- Always use factories when services have constructor dependencies
+- Declare constructor dependencies with `{ dependencies: [...] }` (or `@inject`); use factories for manual or dynamic wiring
 - Use decorators (`@singleton`, `@transient`, `@scoped`) to control lifetimes automatically
 - Use singletons for stateless services (loggers, configs, database connections)
 - Use scoped lifetimes for request-specific state
 - Always dispose containers to clean up resources
-- Use symbols for interface tokens to avoid naming conflicts
+- Use `createToken<T>()` for interface tokens to avoid naming conflicts and get inferred types
 - Explicit lifetime options override decorator metadata when needed
 - Use `getGlobalContainer()` for convenient application-wide access, but prefer explicit containers for better testability

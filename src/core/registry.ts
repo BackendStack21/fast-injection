@@ -1,5 +1,6 @@
 import {
   Token,
+  Dependency,
   Constructor,
   ServiceDefinition,
   Factory,
@@ -22,9 +23,9 @@ export class Registry {
    * Validate token to prevent prototype pollution attacks
    */
   private static validateToken(token: Token): void {
-    const tokenStr = String(token);
-    const dangerousTokens = ["__proto__", "constructor", "prototype"];
-    if (dangerousTokens.includes(tokenStr)) {
+    // Only string tokens can collide with reserved property names. Stringifying
+    // class or symbol tokens would be wasted work (a class stringifies to its source).
+    if (typeof token === "string" && (token === "__proto__" || token === "constructor" || token === "prototype")) {
       throw new RegistrationError(token, "Token name is reserved and cannot be used for security reasons");
     }
   }
@@ -34,9 +35,7 @@ export class Registry {
    */
   register<T>(definition: ServiceDefinition<T>): void {
     Registry.validateToken(definition.token);
-    const { token, replace = false } = definition as ServiceDefinition<T> & {
-      replace?: boolean;
-    };
+    const { token, replace = false } = definition;
 
     if (this.services.has(token) && !replace) {
       const tokenStr = typeof token === "function" ? token.name : String(token);
@@ -84,6 +83,23 @@ export class Registry {
   }
 
   /**
+   * Check if a token has multi-registrations
+   */
+  hasMulti(token: Token): boolean {
+    return this.multiServices.has(token);
+  }
+
+  /**
+   * Iterate over every definition (single and multi registrations)
+   */
+  *definitions(): IterableIterator<ServiceDefinition> {
+    yield* this.services.values();
+    for (const group of this.multiServices.values()) {
+      yield* group;
+    }
+  }
+
+  /**
    * Get all registered tokens
    */
   getTokens(): Token[] {
@@ -99,6 +115,23 @@ export class Registry {
   }
 
   /**
+   * Create a service definition for a pre-built value.
+   * The value is returned as-is on resolution, even when it is a function or a class.
+   */
+  static createValueDefinition<T>(token: Token<T>, value: T, options: RegistrationOptions = {}): ServiceDefinition<T> {
+    return {
+      token,
+      target: value,
+      lifetime: Lifetime.Singleton,
+      isFactory: false,
+      isAsync: false,
+      isValue: true,
+      dependencies: [],
+      replace: options.replace === true,
+    };
+  }
+
+  /**
    * Create a service definition from various input types
    */
   static createDefinition<T>(
@@ -107,36 +140,74 @@ export class Registry {
     options: RegistrationOptions = {},
   ): ServiceDefinition<T> {
     // Determine if target is a factory
-    const isConstructor = typeof target === "function" && target.prototype;
+    const isConstructor = typeof target === "function" && !!target.prototype;
     const isFactory = typeof target === "function" && !isConstructor;
     const isAsync = isFactory && target.constructor.name === "AsyncFunction";
 
     // Determine lifetime: explicit option > decorator metadata > default
     let lifetime = options.lifetime;
-    if (lifetime === undefined && isConstructor) {
-      // Check for decorator metadata
-      const decoratorLifetime = getDecoratorMetadata(METADATA_KEYS.LIFETIME, target);
-      lifetime = decoratorLifetime ?? Lifetime.Transient;
-    } else if (lifetime === undefined) {
-      lifetime = Lifetime.Transient;
+    if (lifetime === undefined) {
+      lifetime = (isConstructor && getDecoratorMetadata(METADATA_KEYS.LIFETIME, target)) || Lifetime.Transient;
     }
 
-    // Extract dependencies for constructors
-    let dependencies: Token[] = [];
-    if (isConstructor) {
-      dependencies = Registry.extractDependencies(target as Constructor<T>);
-    }
-
-    return {
+    const definition: ServiceDefinition<T> = {
       token,
       target,
-      lifetime,
+      lifetime: lifetime as Lifetime,
       isFactory,
       isAsync,
-      dependencies,
-    } as ServiceDefinition<T> & { replace?: boolean };
+      dependencies: [],
+      replace: options.replace === true,
+    };
+
+    if (isConstructor) {
+      Registry.assignDependencies(definition, target as Constructor<T>, options.dependencies);
+    }
+
+    return definition;
   }
 
+  /**
+   * Resolve the constructor dependencies of a definition.
+   * Precedence: explicit `dependencies` option > `@inject` > `design:paramtypes`.
+   */
+  private static assignDependencies<T>(
+    definition: ServiceDefinition<T>,
+    constructor: Constructor<T>,
+    explicit: Dependency[] | undefined,
+  ): void {
+    if (explicit !== undefined) {
+      if (!Array.isArray(explicit)) {
+        throw new RegistrationError(definition.token, "dependencies must be an array of tokens");
+      }
+
+      const tokens: Token[] = new Array(explicit.length);
+      let optional: boolean[] | undefined;
+      for (let i = 0; i < explicit.length; i++) {
+        const dependency = explicit[i];
+        if (dependency !== null && typeof dependency === "object") {
+          tokens[i] = dependency.token;
+          if (dependency.optional) {
+            (optional ??= [])[i] = true;
+          }
+        } else {
+          tokens[i] = dependency as Token;
+        }
+        if (tokens[i] === undefined || tokens[i] === null) {
+          throw new RegistrationError(definition.token, `dependency at index ${i} has no token`);
+        }
+      }
+      definition.dependencies = tokens;
+      definition.optional = optional;
+      return;
+    }
+
+    definition.dependencies = Registry.extractDependencies(constructor);
+    const optionalFlags = getDecoratorMetadata(METADATA_KEYS.OPTIONAL, constructor);
+    if (Array.isArray(optionalFlags)) {
+      definition.optional = optionalFlags.slice();
+    }
+  }
   /**
    * Extract constructor dependencies using metadata or parameter analysis
    */

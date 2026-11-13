@@ -1,4 +1,4 @@
-import type { Token } from "../types/index.js";
+import type { Token, ValidationIssue } from "../types/index.js";
 
 /**
  * Base error class for all dependency injection related errors.
@@ -244,5 +244,35 @@ export class ResolutionError extends DependencyError {
     if (cause && (Error as any).captureStackTrace) {
       (Error as any).captureStackTrace(this, this.constructor);
     }
+  }
+}
+
+/**
+ * Error thrown by `container.validate()` when the dependency graph is invalid.
+ *
+ * Aggregates every problem found, so a misconfigured container can be fixed in
+ * one pass instead of one failed resolution at a time.
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   container.validate();
+ * } catch (error) {
+ *   if (error instanceof ValidationError) {
+ *     for (const issue of error.issues) {
+ *       console.error(`[${issue.type}] ${issue.message}`);
+ *     }
+ *   }
+ * }
+ * ```
+ */
+export class ValidationError extends DependencyError {
+  constructor(public readonly issues: ValidationIssue[]) {
+    super(
+      `Container validation failed with ${issues.length} issue(s):\n` +
+        issues.map((issue) => `  - [${issue.type}] ${issue.message}`).join("\n"),
+      issues[0]?.token as Token,
+    );
+    this.name = "ValidationError";
   }
 }

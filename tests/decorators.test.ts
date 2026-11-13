@@ -193,6 +193,27 @@ describe("Decorator Integration", () => {
   });
 
   describe("@inject decorator", () => {
+    test("should inject an explicit token when imported from the decorator subpath", () => {
+      @singleton()
+      class Database {
+        query() {
+          return "data";
+        }
+      }
+
+      @singleton()
+      class UserService {
+        constructor(@inject(Database) public db: Database) {}
+      }
+
+      container.register(Database);
+      container.register(UserService);
+
+      const service = container.resolve(UserService);
+      expect(service.db).toBeInstanceOf(Database);
+      expect(service.db.query()).toBe("data");
+    });
+
     test("should inject explicit tokens for interfaces using factory", () => {
       const ILogger = Symbol("ILogger");
       const IDatabase = Symbol("IDatabase");

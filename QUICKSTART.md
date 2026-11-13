@@ -6,6 +6,8 @@
 bun add fast-injection
 ```
 
+Requires TypeScript 5.2+ (peer dependency). For `await using`, include `"ESNext"` (or `esnext.disposable`) in your `tsconfig.json` `"lib"`.
+
 ## Basic Usage
 
 ### 1. Simple Service Registration
@@ -172,7 +174,104 @@ const db = container.resolve(DatabaseService);
 await container.dispose(); // Calls onDispose on all services
 ```
 
-### 7. Testing with Mocks
+### 7. Dependencies Without Decorators
+
+Declare constructor dependencies at registration time. No decorators or `reflect-metadata` needed, and the list takes precedence over `@inject`:
+
+```typescript
+import { Container, Lifetime } from "fast-injection";
+
+class Database {}
+class Cache {}
+
+class UserService {
+  constructor(
+    private db: Database,
+    private apiUrl: string,
+    private cache?: Cache,
+  ) {}
+}
+
+const container = new Container();
+container.register(Database, { lifetime: Lifetime.Singleton });
+container.registerValue("apiUrl", "https://api.example.com");
+
+// Parameter order; { token, optional: true } injects undefined when not registered
+container.register(UserService, {
+  dependencies: [Database, "apiUrl", { token: Cache, optional: true }],
+});
+
+const service = container.resolve(UserService);
+```
+
+### 8. Typed Tokens
+
+`createToken<T>()` returns a unique symbol that carries its type, so `resolve()` is inferred without a type argument. Use it for interfaces and configuration:
+
+```typescript
+import { Container, createToken } from "fast-injection";
+
+interface Config {
+  apiUrl: string;
+}
+
+const CONFIG = createToken<Config>("config");
+
+const container = new Container();
+container.registerValue(CONFIG, { apiUrl: "https://api.example.com" });
+
+const config = container.resolve(CONFIG); // Config
+```
+
+### 9. Optional Resolution
+
+```typescript
+import { inject, optional } from "fast-injection/decorators";
+
+// undefined instead of an error when the token is not registered
+const cache = container.tryResolve(Cache) ?? new InMemoryCache();
+const maybe = await container.tryResolveAsync(Cache);
+
+class Reports {
+  constructor(@inject(Cache) @optional() private cache?: Cache) {}
+}
+```
+
+Only a missing token is tolerated. A registered service that fails to build (for example, one of its own dependencies is missing) still throws.
+
+### 10. Validate the Graph at Startup
+
+```typescript
+import { ValidationError } from "fast-injection";
+
+try {
+  container.validate(); // inspects registrations, instantiates nothing
+} catch (error) {
+  if (error instanceof ValidationError) {
+    for (const issue of error.issues) {
+      console.error(`[${issue.type}] ${issue.message}`); // missing | circular | captive
+    }
+  }
+  throw error;
+}
+```
+
+A `captive` issue means a singleton depends (directly or through transients) on a scoped service. Only constructor registrations are checked (factories are opaque), and a singleton is checked against the container that owns it. Tokens registered later in request scopes (such as `scope.registerValue("requestContext", ...)`) show up as `missing` when validating the root: validate from a representative scope, or declare those dependencies optional.
+
+### 11. `await using` Scopes
+
+Containers implement `Symbol.asyncDispose`, so a scope is disposed automatically when the block ends:
+
+```typescript
+async function handleRequest(req: Request) {
+  await using scope = container.createScope();
+  return scope.resolve(RequestHandler).handle(req);
+} // scope disposed here, even if handle() throws
+```
+
+This needs TypeScript 5.2+ and `"lib"` including `ESNext` / `esnext.disposable`. Disposing a scope never disposes a parent singleton it merely aliases.
+
+### 12. Testing with Mocks
 
 ```typescript
 import { createTestContainer } from "fast-injection/testing";
@@ -217,7 +316,7 @@ container.registerFactory(ComplexService, (c) => new ComplexService(c.resolve(De
 
 You can use decorators to control service lifetimes and document your code. **Decorators are fully functional** - they automatically control lifetimes when you use `register()` without explicit options.
 
-### 8. Decorator-Based Lifetimes
+### 13. Decorator-Based Lifetimes
 
 ```typescript
 import { Container } from "fast-injection";
@@ -264,7 +363,7 @@ const logger2 = container.resolve(Logger);
 console.log(logger1 === logger2); // false
 ```
 
-### 8. Using @inject for Interface Tokens
+### 14. Using @inject for Interface Tokens
 
 ```typescript
 import { injectable, inject } from "fast-injection/decorators";
@@ -322,7 +421,7 @@ const service = container.resolve(UserService);
 await service.getUsers();
 ```
 
-### 9. Decorators Control Lifetimes
+### 15. Decorators Control Lifetimes
 
 ```typescript
 import { singleton } from "fast-injection/decorators";
@@ -341,7 +440,7 @@ class Logger {
   }
 }
 
-// No decorator - needs manual injection
+// No decorator - declare dependencies at registration (or use a factory)
 class UserService {
   constructor(
     private db: Database,
@@ -360,42 +459,46 @@ const container = new Container();
 container.register(Database);
 container.register(Logger);
 
-// No decorator on UserService — provide a factory to wire dependencies,
-// or annotate constructor parameters with @inject(...) and register the class directly
-container.registerFactory(UserService, (c) => {
-  return new UserService(c.resolve(Database), c.resolve(Logger));
-});
+// No decorator on UserService: declare its dependencies at registration,
+// annotate constructor parameters with @inject(...), or provide a factory
+container.register(UserService, { dependencies: [Database, Logger] });
 
 const service = container.resolve(UserService);
 ```
 
 ### Decorators: When to Use
 
-| Use Case                        | Recommended Approach                            |
-| ------------------------------- | ----------------------------------------------- |
-| **Simple services**             | Use `@singleton()`, `@transient()`, `@scoped()` |
-| **Marking injectables**         | Use `@injectable()` (transient by default)      |
-| **Services with dependencies**  | **Use factories** - `registerFactory()`         |
-| **Interface tokens**            | Use factories with symbol tokens                |
-| **Override decorator lifetime** | Use registration options - `{ lifetime }`       |
+| Use Case                        | Recommended Approach                             |
+| ------------------------------- | ------------------------------------------------ |
+| **Simple services**             | Use `@singleton()`, `@transient()`, `@scoped()`  |
+| **Marking injectables**         | Use `@injectable()` (transient by default)       |
+| **Services with dependencies**  | `{ dependencies: [...] }`, `@inject`, or factory |
+| **Interface tokens**            | `createToken<T>()` (or symbol tokens)            |
+| **Override decorator lifetime** | Use registration options - `{ lifetime }`        |
 
-**Important:** Decorators automatically control lifetimes when using `container.register()`. For classes that are not decorated or do not have `@inject(...)` annotations on constructor parameters, you still need to use `registerFactory()` to provide dependency wiring.
+**Important:** Decorators automatically control lifetimes when using `container.register()`. For classes that are not decorated or do not have `@inject(...)` annotations on constructor parameters, you can declare the wiring with `register(Class, { dependencies: [...] })` or use `registerFactory()`.
 
 ## API Reference
 
 ### Container Methods
 
 - `register<T>(token, target?, options?)` - Register a service
-- `registerValue<T>(token, value)` - Register a value
+- `registerValue<T>(token, value, options?)` - Register a value (functions and classes are returned as-is)
 - `registerFactory<T>(token, factory, options?)` - Register a factory
 - `registerAsyncFactory<T>(token, factory, options?)` - Register async factory
 - `registerAll<T>(token, implementations, options?)` - Register multiple implementations
 - `resolve<T>(token)` - Resolve a service
 - `resolveAsync<T>(token)` - Resolve a service asynchronously
-- `resolveAll<T>(token)` - Resolve all implementations
+- `resolveAll<T>(token)` / `resolveAllAsync<T>(token)` - Resolve all implementations
+- `tryResolve<T>(token)` / `tryResolveAsync<T>(token)` - Resolve, or `undefined` when not registered
+- `validate()` - Check the graph for missing, circular and captive dependencies (throws `ValidationError`)
 - `has(token)` - Check if service is registered
 - `createScope()` - Create child scoped container
-- `dispose()` - Dispose all services
+- `dispose()` / `[Symbol.asyncDispose]()` - Dispose all services (enables `await using`)
+
+### Helpers
+
+- `createToken<T>(description)` - Create a typed injection token
 
 ### Lifetimes
 
@@ -408,7 +511,8 @@ const service = container.resolve(UserService);
 ```typescript
 {
   lifetime: Lifetime.Singleton | Lifetime.Transient | Lifetime.Scoped,
-  replace: boolean // Allow overwriting existing registrations
+  replace: boolean, // Replace an existing registration (drops its cached instance)
+  dependencies: Dependency[] // Explicit constructor dependencies: Token | { token, optional? }
 }
 ```
 
@@ -419,6 +523,7 @@ const service = container.resolve(UserService);
 - `@transient()` - Mark class as transient lifetime
 - `@scoped()` - Mark class as scoped lifetime
 - `@inject(token)` - Explicitly inject dependency token
+- `@optional()` - Inject `undefined` when the parameter's token is not registered
 
 **Decorators control lifetimes automatically** when using `container.register()`. Explicit lifetime options override decorator metadata:
 
@@ -460,6 +565,12 @@ bun run examples/06-testing-mocks.ts           # Testing utilities
 bun run examples/07-decorator-lifetimes.ts     # Decorator documentation
 bun run examples/08-inject-decorator.ts        # Interface tokens
 bun run examples/09-decorators-factories.ts    # Combined approach
+bun run examples/10-global-container.ts        # Global container
+bun run examples/11-lifecycle-hooks-advanced.ts # Async hooks, disposal order
+bun run examples/12-explicit-dependencies.ts   # Decorator-free injection
+bun run examples/13-typed-tokens-optional.ts   # createToken, tryResolve
+bun run examples/14-validation.ts              # container.validate()
+bun run examples/15-await-using.ts             # await using scopes
 
 # Original examples (still available)
 bun run examples/basic.ts                      # Comprehensive demo
@@ -482,13 +593,14 @@ bun test --coverage
 
 ## Tips & Best Practices
 
-### 1. Use Factories for Dependencies
+### 1. Choose How to Wire Dependencies
 
-Use `registerFactory()` when your service requires manual wiring (third-party classes, dynamic construction, or when you are not using decorators).
-
-If your class is decorated and uses `@inject(...)` or `@injectable()`, you can register the class directly with `container.register()` and the container will inject dependencies automatically.
+Use `registerFactory()` when your service requires manual wiring (dynamic construction, conditional logic, or third-party setup). For plain constructor injection, prefer `register(Class, { dependencies: [...] })`, or decorate with `@inject(...)` and register the class directly.
 
 ```typescript
+// No decorators: explicit dependencies
+container.register(UserService, { dependencies: [Database, Logger] });
+
 // Factory for manual wiring
 container.registerFactory(UserService, (c) => {
   return new UserService(c.resolve(Database), c.resolve(Logger));
@@ -535,19 +647,24 @@ try {
 }
 ```
 
-### 5. Use Symbols for Interface Tokens
+### 5. Use Typed Tokens for Interfaces
 
 ```typescript
-// Type-safe interface tokens
+import { createToken } from "fast-injection";
+
 interface IUserRepository {
   findById(id: string): Promise<User>;
 }
 
-const IUserRepository = Symbol("IUserRepository");
+const USER_REPOSITORY = createToken<IUserRepository>("IUserRepository");
 
-container.register(IUserRepository, UserRepository);
-const repo = container.resolve<IUserRepository>(IUserRepository);
+container.register(USER_REPOSITORY, UserRepository);
+const repo = container.resolve(USER_REPOSITORY); // IUserRepository
 ```
+
+### 6. Validate at Startup
+
+Call `container.validate()` once after registering everything to fail fast on missing, circular or captive dependencies.
 
 ## Troubleshooting
 
@@ -562,13 +679,13 @@ const service = container.resolve(MyService); // ✅
 
 ### Dependencies are undefined
 
-Use factory registration for services with dependencies:
+The container only injects what it is told about. Declare the dependencies (or use `@inject`, or a factory):
 
 ```typescript
-container.registerFactory(ServiceWithDeps, (c) => {
-  return new ServiceWithDeps(c.resolve(Dependency));
-});
+container.register(ServiceWithDeps, { dependencies: [Dependency] });
 ```
+
+`container.validate()` reports missing dependencies before anything is resolved.
 
 ### Circular Dependency Error
 

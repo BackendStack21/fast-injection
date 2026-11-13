@@ -11,7 +11,13 @@ import {
 import { Registry } from "./registry.js";
 import { Resolver } from "./resolver.js";
 import { LifecycleManager } from "./lifecycle.js";
-import { UnregisteredServiceError } from "../errors/index.js";
+import { CircularDependencyError, UnregisteredServiceError, ValidationError } from "../errors/index.js";
+import { validateGraph, type GraphNode } from "./validation.js";
+
+/**
+ * The resolver is stateless, so every container shares one instance
+ */
+const sharedResolver = new Resolver();
 
 /**
  * Main dependency injection container
@@ -24,8 +30,11 @@ export class Container implements IContainer {
 
   constructor(parent?: Container) {
     this.registry = new Registry();
-    this.resolver = new Resolver();
-    this.lifecycle = parent ? parent.lifecycle.createChild() : new LifecycleManager();
+    this.resolver = sharedResolver;
+    // Scopes get their own lifecycle manager. Singletons owned by an ancestor are
+    // always resolved through that ancestor, so nothing needs to be copied here
+    // and creating a scope stays O(1) regardless of how many singletons exist.
+    this.lifecycle = new LifecycleManager(parent?.lifecycle);
     this.parent = parent;
   }
 
@@ -59,18 +68,14 @@ export class Container implements IContainer {
       opts = targetOrOptions as RegistrationOptions;
     }
 
-    const definition = Registry.createDefinition(token, target, opts);
-    this.registry.register(definition);
+    this.add(Registry.createDefinition(token, target, opts));
   }
 
   /**
    * Register a value directly
    */
-  registerValue<T>(token: Token<T>, value: T): void {
-    const definition = Registry.createDefinition(token, value, {
-      lifetime: Lifetime.Singleton,
-    });
-    this.registry.register(definition);
+  registerValue<T>(token: Token<T>, value: T, options?: RegistrationOptions): void {
+    this.add(Registry.createValueDefinition(token, value, options));
   }
 
   /**
@@ -78,7 +83,11 @@ export class Container implements IContainer {
    */
   registerFactory<T>(token: Token<T>, factory: Factory<T>, options?: RegistrationOptions): void {
     const definition = Registry.createDefinition(token, factory, options);
-    this.registry.register(definition);
+    // Whatever its shape, a target registered here is called, never constructed
+    definition.isFactory = true;
+    definition.dependencies = [];
+    definition.optional = undefined;
+    this.add(definition);
   }
 
   /**
@@ -86,7 +95,12 @@ export class Container implements IContainer {
    */
   registerAsyncFactory<T>(token: Token<T>, factory: AsyncFactory<T>, options?: RegistrationOptions): void {
     const definition = Registry.createDefinition(token, factory, options);
-    this.registry.register(definition);
+    // A promise-returning function is async even when not declared with `async`
+    definition.isFactory = true;
+    definition.isAsync = true;
+    definition.dependencies = [];
+    definition.optional = undefined;
+    this.add(definition);
   }
 
   /**
@@ -184,67 +198,116 @@ export class Container implements IContainer {
    * Check if a service is registered
    */
   has(token: Token): boolean {
-    if (this.registry.has(token)) {
-      return true;
+    for (let container: Container | undefined = this; container !== undefined; container = container.parent) {
+      if (container.registry.has(token)) {
+        return true;
+      }
     }
-    return this.parent?.has(token) ?? false;
+    return false;
   }
 
   /**
    * Resolve a service instance
    */
-  resolve<T>(token: Token<T>, stack: Set<Token> = new Set()): T {
-    const definition = this.getDefinition(token);
-
-    if (!definition) {
-      throw new UnregisteredServiceError(token);
+  resolve<T>(token: Token<T>, stack?: Set<Token>): T {
+    // Find the definition and the container that owns it
+    let owner: Container = this;
+    let definition = this.registry.get(token);
+    while (definition === undefined) {
+      if (owner.parent === undefined) {
+        throw new UnregisteredServiceError(token);
+      }
+      owner = owner.parent;
+      definition = owner.registry.get(token);
     }
 
-    // For singletons, always resolve from the container that owns the registration
-    if (definition.lifetime === Lifetime.Singleton && !this.registry.has(token) && this.parent) {
-      return (this.parent as any).resolve(token, stack);
-    }
-
-    return this.lifecycle.applyLifetime(definition.lifetime, token, () =>
-      this.resolver.resolve(token, definition, this, new Map(), stack),
-    );
+    // Singletons live in (and resolve their dependencies from) the container that
+    // owns the registration; everything else belongs to the resolving container.
+    const lifetime = definition.lifetime;
+    const target = lifetime === Lifetime.Singleton ? owner : this;
+    return target.instantiate(definition, lifetime, token, stack);
   }
 
   /**
    * Resolve a service instance asynchronously
    */
-  async resolveAsync<T>(token: Token<T>, stack: Set<Token> = new Set()): Promise<T> {
-    const definition = this.getDefinition(token);
-
-    if (!definition) {
-      throw new UnregisteredServiceError(token);
+  async resolveAsync<T>(token: Token<T>, stack?: Set<Token>): Promise<T> {
+    let owner: Container = this;
+    let definition = this.registry.get(token);
+    while (definition === undefined) {
+      if (owner.parent === undefined) {
+        throw new UnregisteredServiceError(token);
+      }
+      owner = owner.parent;
+      definition = owner.registry.get(token);
     }
 
-    // For singletons, always resolve from the container that owns the registration
-    if (definition.lifetime === Lifetime.Singleton && !this.registry.has(token) && this.parent) {
-      return (this.parent as any).resolveAsync(token, stack);
-    }
-
-    return this.lifecycle.applyLifetimeAsync(definition.lifetime, token, () =>
-      this.resolver.resolveAsync(token, definition, this, new Map(), stack),
-    );
+    const lifetime = definition.lifetime;
+    const target = lifetime === Lifetime.Singleton ? owner : this;
+    return target.instantiateAsync(definition, lifetime, token, stack);
   }
 
   /**
    * Resolve all implementations of a service
    */
-  resolveAll<T>(token: Token<T>, stack: Set<Token> = new Set()): T[] {
-    const definitions = this.registry.getAll(token);
-
-    if (definitions.length === 0 && this.parent) {
-      return (this.parent as any).resolveAll(token, stack);
+  resolveAll<T>(token: Token<T>, stack?: Set<Token>): T[] {
+    const owner = this.findMultiOwner(token);
+    if (owner === undefined) {
+      return [];
     }
 
-    return definitions.map((definition) =>
-      this.lifecycle.applyLifetime(definition.lifetime, definition.token, () =>
-        this.resolver.resolve(definition.token, definition, this, new Map(), stack),
-      ),
-    );
+    const definitions = owner.registry.getAll(token);
+    const instances = new Array<T>(definitions.length);
+    for (let i = 0; i < definitions.length; i++) {
+      const definition = definitions[i] as ServiceDefinition<T>;
+      const target = definition.lifetime === Lifetime.Singleton ? owner : this;
+      // Implementations share a token, so each is cached under its own definition
+      instances[i] = target.instantiate(definition, definition.lifetime, definition, stack);
+    }
+    return instances;
+  }
+
+  /**
+   * Resolve all implementations of a service asynchronously
+   */
+  async resolveAllAsync<T>(token: Token<T>, stack?: Set<Token>): Promise<T[]> {
+    const owner = this.findMultiOwner(token);
+    if (owner === undefined) {
+      return [];
+    }
+
+    const definitions = owner.registry.getAll(token);
+    const instances: T[] = [];
+    // Sequential on purpose: implementations are created in registration order
+    for (const definition of definitions as ServiceDefinition<T>[]) {
+      const target = definition.lifetime === Lifetime.Singleton ? owner : this;
+      instances.push(await target.instantiateAsync(definition, definition.lifetime, definition, stack));
+    }
+    return instances;
+  }
+
+  /**
+   * Resolve a service, or return undefined when the token is not registered
+   */
+  tryResolve<T>(token: Token<T>): T | undefined {
+    return this.has(token) ? this.resolve(token) : undefined;
+  }
+
+  /**
+   * Resolve a service asynchronously, or return undefined when the token is not registered
+   */
+  async tryResolveAsync<T>(token: Token<T>): Promise<T | undefined> {
+    return this.has(token) ? this.resolveAsync(token) : undefined;
+  }
+
+  /**
+   * Verify the dependency graph without instantiating anything
+   */
+  validate(): void {
+    const issues = validateGraph(this.visibleNodes(), lookupNode);
+    if (issues.length > 0) {
+      throw new ValidationError(issues);
+    }
   }
 
   /**
@@ -258,27 +321,131 @@ export class Container implements IContainer {
    * Dispose of all disposable services
    */
   async dispose(): Promise<void> {
-    await this.lifecycle.dispose();
-    this.registry.clear();
+    try {
+      await this.lifecycle.dispose();
+    } finally {
+      this.registry.clear();
+    }
   }
 
   /**
-   * Get service definition from registry or parent
+   * Explicit resource management (`await using scope = container.createScope()`)
    */
-  private getDefinition<T>(token: Token<T>): ServiceDefinition<T> | undefined {
-    const definition = this.registry.get(token);
+  [Symbol.asyncDispose](): Promise<void> {
+    return this.dispose();
+  }
 
-    if (definition) {
-      return definition;
+  /**
+   * Store a definition, dropping any instance cached for a registration it
+   * replaces or (in a scope) for the parent registration it now shadows
+   */
+  private add(definition: ServiceDefinition): void {
+    const replacing = definition.replace === true && this.registry.has(definition.token);
+    this.registry.register(definition);
+    if (replacing || this.parent !== undefined) {
+      this.lifecycle.evict(definition.token);
+    }
+  }
+
+  /**
+   * Create (or fetch the cached) instance of a definition in this container.
+   * `key` identifies the instance in the lifetime caches.
+   */
+  private instantiate<T>(
+    definition: ServiceDefinition<T>,
+    lifetime: Lifetime,
+    key: unknown,
+    stack: Set<Token> | undefined,
+  ): T {
+    if (lifetime !== Lifetime.Transient) {
+      // Fast path: no closure allocation for already created instances
+      const cached = this.lifecycle.peek(lifetime, key);
+      if (cached !== undefined) {
+        return cached;
+      }
     }
 
-    if (this.parent) {
-      return this.parent["getDefinition"](token);
+    return this.lifecycle.applyLifetime(lifetime, key as Token<T>, () =>
+      this.resolver.resolve(definition.token, definition, this, undefined, stack),
+    );
+  }
+
+  private instantiateAsync<T>(
+    definition: ServiceDefinition<T>,
+    lifetime: Lifetime,
+    key: unknown,
+    stack: Set<Token> | undefined,
+  ): Promise<T> {
+    if (lifetime !== Lifetime.Transient) {
+      const cached = this.lifecycle.peek(lifetime, key);
+      if (cached !== undefined) {
+        return Promise.resolve(cached);
+      }
+
+      // A cached lifetime that is still being created would hand back its own
+      // pending promise and wait on itself forever; report the cycle instead.
+      if (stack !== undefined && stack.has(definition.token)) {
+        return Promise.reject(new CircularDependencyError([...stack, definition.token]));
+      }
     }
 
+    return this.lifecycle.applyLifetimeAsync(lifetime, key as Token<T>, () =>
+      this.resolver.resolveAsync(definition.token, definition, this, undefined, stack),
+    );
+  }
+
+  /**
+   * Find the closest container holding multi-registrations for a token
+   */
+  private findMultiOwner(token: Token): Container | undefined {
+    for (let container: Container | undefined = this; container !== undefined; container = container.parent) {
+      if (container.registry.hasMulti(token)) {
+        return container;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Every definition reachable from this container, paired with the container it
+   * resolves in; closer registrations shadow ancestors' registrations of the same token.
+   */
+  private visibleNodes(): GraphNode<Container>[] {
+    const nodes: GraphNode<Container>[] = [];
+    const seenSingle = new Set<Token>();
+    const seenMulti = new Set<Token>();
+    for (let container: Container | undefined = this; container !== undefined; container = container.parent) {
+      const registry = container.registry;
+      const shadowedSingle = new Set(seenSingle);
+      const shadowedMulti = new Set(seenMulti);
+      for (const definition of registry.definitions()) {
+        const multi = registry.get(definition.token) !== definition;
+        const shadowed = multi ? shadowedMulti : shadowedSingle;
+        if (shadowed.has(definition.token)) {
+          continue;
+        }
+        (multi ? seenMulti : seenSingle).add(definition.token);
+        nodes.push({ definition, context: definition.lifetime === Lifetime.Singleton ? container : this });
+      }
+    }
+    return nodes;
+  }
+
+  /**
+   * What `token` resolves to when requested from this container (mirrors `resolve`)
+   */
+  static lookup(from: Container, token: Token): GraphNode<Container> | undefined {
+    for (let container: Container | undefined = from; container !== undefined; container = container.parent) {
+      const definition = container.registry.get(token);
+      if (definition !== undefined) {
+        return { definition, context: definition.lifetime === Lifetime.Singleton ? container : from };
+      }
+    }
     return undefined;
   }
 }
+
+const lookupNode = (from: Container, token: Token) => Container.lookup(from, token);
 
 /**
  * Create a new dependency injection container instance.

@@ -69,79 +69,79 @@ Compares DI container performance against direct instantiation:
 
 ## Performance Results
 
-### Key Metrics (on Bun 1.3.6, Apple Silicon M-series)
+### Key Metrics (on Bun 1.4.4, macOS arm64)
 
 | Operation                  | Ops/Second     | Avg Time |
 | -------------------------- | -------------- | -------- |
 | **Registration**           |                |          |
-| Register simple class      | ~6.3M ops/sec  | 0.158µs  |
-| Register factory           | ~8.5M ops/sec  | 0.118µs  |
-| Register value             | ~5.1M ops/sec  | 0.195µs  |
-| Register with decorator    | ~6.9M ops/sec  | 0.144µs  |
+| Register simple class      | ~7.3M ops/sec  | 0.137µs  |
+| Register factory           | ~8.9M ops/sec  | 0.112µs  |
+| Register value             | ~7.4M ops/sec  | 0.135µs  |
+| Register with decorator    | ~8.8M ops/sec  | 0.114µs  |
 | **Resolution (Transient)** |                |          |
-| Simple class               | ~8.9M ops/sec  | 0.112µs  |
-| Factory                    | ~7.8M ops/sec  | 0.127µs  |
-| Value                      | ~19.2M ops/sec | 0.052µs  |
-| Deep chain (4 levels)      | ~1.3M ops/sec  | 0.756µs  |
-| With 1 dependency          | ~4.4M ops/sec  | 0.225µs  |
+| Simple class               | ~27.3M ops/sec | 0.037µs  |
+| Factory                    | ~23.6M ops/sec | 0.042µs  |
+| Value                      | ~31.3M ops/sec | 0.032µs  |
+| Deep chain (4 levels)      | ~3.4M ops/sec  | 0.297µs  |
+| With 1 dependency          | ~12.3M ops/sec | 0.081µs  |
 | **Lifecycle**              |                |          |
-| Transient                  | ~11.0M ops/sec | 0.091µs  |
-| Singleton (cached)         | ~26.2M ops/sec | 0.038µs  |
-| Scoped (first)             | ~4.5M ops/sec  | 0.223µs  |
-| Scoped (cached)            | ~25.4M ops/sec | 0.039µs  |
-| @singleton (cached)        | ~22.2M ops/sec | 0.045µs  |
-| @transient                 | ~6.5M ops/sec  | 0.153µs  |
-| @scoped (cached)           | ~23.2M ops/sec | 0.043µs  |
+| Transient                  | ~36.4M ops/sec | 0.027µs  |
+| Singleton (cached)         | ~89.1M ops/sec | 0.011µs  |
+| Scoped (first)             | ~9.2M ops/sec  | 0.108µs  |
+| Scoped (cached)            | ~37.4M ops/sec | 0.027µs  |
+| @singleton (cached)        | ~57.4M ops/sec | 0.017µs  |
+| @transient                 | ~22.5M ops/sec | 0.044µs  |
+| @scoped (cached)           | ~77.2M ops/sec | 0.013µs  |
 | **Async**                  |                |          |
-| Async factory              | ~1.24M ops/sec | 0.806µs  |
-| Async with deps            | ~738K ops/sec  | 1.354µs  |
-| Async multi-deps           | ~569K ops/sec  | 1.756µs  |
+| Async factory              | ~2.6M ops/sec  | 0.387µs  |
+| Async with deps            | ~1.50M ops/sec | 0.665µs  |
+| Async multi-deps           | ~1.09M ops/sec | 0.921µs  |
 | **Scope Management**       |                |          |
-| Create scope               | ~21.0M ops/sec | 0.048µs  |
-| Create + dispose           | ~4.0M ops/sec  | 0.248µs  |
-| Nested (3 levels)          | ~555K ops/sec  | 1.802µs  |
+| Create scope               | ~27.8M ops/sec | 0.036µs  |
+| Create + dispose           | ~6.1M ops/sec  | 0.163µs  |
+| Nested (3 levels)          | ~1.97M ops/sec | 0.509µs  |
 | **Comparison**             |                |          |
-| Direct instantiation       | ~86.4M ops/sec | 0.012µs  |
-| DI Transient               | ~1.0M ops/sec  | 0.979µs  |
-| DI Singleton               | ~61.2M ops/sec | 0.016µs  |
+| Direct instantiation       | ~89.2M ops/sec | 0.011µs  |
+| DI Transient               | ~3.6M ops/sec  | 0.280µs  |
+| DI Singleton               | ~88.2M ops/sec | 0.011µs  |
 
 ### Performance Insights
 
-1. **Singleton is 98.3% faster than Transient**
-   - Singleton (explicit): 26.2M ops/sec (0.038µs)
-   - Singleton (@decorator): 22.2M ops/sec (0.045µs)
-   - Transient: 11.0M ops/sec (0.091µs)
+1. **Singleton is ~2.4x faster than Transient**
+   - Singleton (explicit): 89.1M ops/sec (0.011µs)
+   - Singleton (@decorator): 57.4M ops/sec (0.017µs)
+   - Transient: 36.4M ops/sec (0.027µs)
    - Use singletons for services that don't need per-request state
-   - Explicit lifetime options are faster than decorators
+   - Decorator-based lookups are in the same range as explicit options
 
-2. **Value resolution is fastest**
-   - Registration: 5.1M ops/sec
-   - Resolution: 19.2M ops/sec
+2. **Value resolution is fast**
+   - Registration: 7.4M ops/sec
+   - Resolution: 31.3M ops/sec
    - Perfect for configuration objects and constants
 
 3. **Overhead Analysis (with security fixes)**
-   - Direct instantiation: 0.012µs (baseline)
-   - DI Transient: 0.979µs (~82x overhead)
-   - DI Singleton: 0.016µs (~1.3x overhead)
+   - Direct instantiation: 0.011µs (baseline)
+   - DI Transient: 0.280µs (~25x overhead)
+   - DI Singleton: 0.011µs (~1.0x overhead)
    - **Conclusion**: Use singletons where possible to minimize overhead
-   - **Security note**: Overhead includes thread-safe circular dependency detection
+   - **Security note**: Overhead includes circular dependency detection
 
 4. **Async Operations**
-   - Async factory: 1.24M ops/sec (0.806µs)
-   - With dependencies: 569K-738K ops/sec
+   - Async factory: 2.6M ops/sec (0.387µs)
+   - With dependencies: 1.09M-1.50M ops/sec
    - Suitable for I/O-bound initialization
    - Includes race condition protection for singleton creation
-   - ~10-20x slower than sync operations due to Promise overhead
 
 5. **Scoped Services**
-   - First resolution: 4.5M ops/sec (0.223µs)
-   - Cached: 25.4M ops/sec (0.039µs - nearly as fast as singleton)
+   - First resolution: 9.2M ops/sec (0.108µs)
+   - Cached: 37.4M ops/sec (0.027µs)
    - Perfect for request-scoped services in web apps
    - Each scope is properly isolated (no cross-contamination)
+   - Creating a scope is O(1): singletons are not copied into it
 
 6. **Factory Performance**
-   - Registration: 8.5M ops/sec (fastest registration method)
-   - Resolution: 7.8M ops/sec
+   - Registration: 8.9M ops/sec
+   - Resolution: 23.6M ops/sec
    - Includes circular dependency protection even in factory functions
 
 ## Interpreting Results
@@ -159,33 +159,32 @@ Compares DI container performance against direct instantiation:
    - Service maintains state per operation
    - Memory usage is a concern
    - Service is used infrequently
-   - Performance: 11.0M ops/sec (0.091µs)
+   - Performance: 36.4M ops/sec (0.027µs)
 
 2. **Singleton** - Use when:
    - Service is stateless or thread-safe
    - Service is used frequently
    - Maximum performance is needed
-   - Performance: 26.2M ops/sec (0.038µs)
+   - Performance: 89.1M ops/sec (0.011µs)
    - Examples: loggers, configuration, database connections
 
 3. **Scoped** - Use when:
    - Service needs request-specific state
    - Service should be shared within a scope (e.g., HTTP request)
-   - Performance: 25.4M ops/sec cached (0.039µs), 4.5M ops/sec first
+   - Performance: 37.4M ops/sec cached (0.027µs), 9.2M ops/sec first
    - Examples: database transactions, request context
 
 ## Optimization Tips
 
-1. **Prefer singletons for frequently-used services** - 98.3% performance gain over transient
-2. **Use explicit lifetime options for maximum performance** - Consistently faster than decorators
-3. **Decorators are still very fast** - 22.2M ops/sec for @singleton is excellent
-4. **Use factories for simple registrations** - Fastest registration method (8.5M ops/sec)
-5. **Batch registrations** - Register all services at startup
-6. **Minimize dependency chain depth** - Each level adds ~0.15-0.20µs
-7. **Cache resolved instances** - Use singleton or scoped lifetimes
-8. **Avoid async when not needed** - Sync operations are 10-20x faster
-9. **Use scoped for request-scoped state** - 22-25M ops/sec when cached
-10. **Value registration for config** - 19.2M ops/sec resolution, perfect for constants
+1. **Prefer singletons for frequently-used services** - ~2.4x faster than transient
+2. **Decorators are very fast** - 57.4M ops/sec for @singleton (cached)
+3. **Use factories for simple registrations** - 8.9M ops/sec registration
+4. **Batch registrations** - Register all services at startup
+5. **Minimize dependency chain depth** - Each level adds roughly 0.07µs (4 levels: 0.297µs)
+6. **Cache resolved instances** - Use singleton or scoped lifetimes
+7. **Avoid async when not needed** - Sync resolution is an order of magnitude faster
+8. **Use scoped for request-scoped state** - 37.4M ops/sec when cached
+9. **Value registration for config** - 31.3M ops/sec resolution, perfect for constants
 
 ## Security & Concurrency
 
@@ -204,8 +203,8 @@ The overhead from these protections is minimal (< 0.01µs per operation) while e
 
 Fast-Injection is optimized for Bun and provides:
 
-- **Ultra-low overhead**: ~0.988µs per transient resolution, ~0.037µs for singletons
-- **Excellent singleton performance**: 26.8M ops/sec (explicit), 16.7M ops/sec (decorator)
+- **Ultra-low overhead**: ~0.280µs per transient resolution in the comparison benchmark, ~0.011µs for singletons
+- **Excellent singleton performance**: 89.1M ops/sec (explicit), 57.4M ops/sec (decorator)
 - **Concurrent-safe**: All operations are thread-safe and race-condition-free
 - **Flexible API**: Decorators or explicit options, your choice
 - **TypeScript-first**: Full type safety with decorators

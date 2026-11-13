@@ -19,6 +19,11 @@ Modern, lightweight TypeScript Dependency Injection optimized for Bun runtime.
 - 🎯 **Zero Dependencies**: No production dependencies
 - 🔄 **Multiple Lifetimes**: Singleton, transient, and scoped
 - 🎨 **Flexible API**: Decorators, functional, or imperative style
+- 🧩 **Decorator-Free Injection**: Declare constructor dependencies at registration, no `reflect-metadata` needed
+- 🏷️ **Typed Tokens**: `createToken<T>()` for interfaces and config, inferred on `resolve()`
+- ❓ **Optional Dependencies**: `tryResolve()`, `@optional()` and `{ token, optional: true }`
+- ✅ **Graph Validation**: `container.validate()` catches missing, circular and captive dependencies at startup
+- 🧹 **`await using` Scopes**: Containers implement `Symbol.asyncDispose`
 - 🧪 **Testing Friendly**: Built-in testing utilities
 - 🔥 **Bun Optimized**: Leverages Bun's native performance
 
@@ -26,29 +31,31 @@ Modern, lightweight TypeScript Dependency Injection optimized for Bun runtime.
 
 Fast-Injection is optimized for speed with minimal overhead. Here are the key performance metrics:
 
-| Operation            | Ops/Second    | Avg Time | Notes                            |
-| -------------------- | ------------- | -------- | -------------------------------- |
-| **Registration**     |               |          |                                  |
-| Register class       | ~6.3M ops/sec | 0.16µs   | Simple class registration        |
-| Register factory     | ~8.5M ops/sec | 0.12µs   | Factory function registration    |
-| Register value       | ~5.1M ops/sec | 0.20µs   | Direct value registration        |
-| **Resolution**       |               |          |                                  |
-| Singleton (cached)   | ~26M ops/sec  | 0.038µs  | 🚀 **Fastest** - cached instance |
-| Scoped (cached)      | ~25M ops/sec  | 0.039µs  | Cached within scope              |
-| Transient            | ~11M ops/sec  | 0.091µs  | New instance each time           |
-| Factory              | ~7.8M ops/sec | 0.13µs   | Factory function call            |
-| Value                | ~19M ops/sec  | 0.052µs  | Direct value retrieval           |
-| **Async Operations** |               |          |                                  |
-| Async factory        | ~1.2M ops/sec | 0.81µs   | Async initialization             |
-| Async with deps      | ~738K ops/sec | 1.35µs   | Async with dependencies          |
-| **Scope Management** |               |          |                                  |
-| Create scope         | ~21M ops/sec  | 0.048µs  | Lightweight scope creation       |
-| Scope disposal       | ~4.0M ops/sec | 0.25µs   | Clean scope teardown             |
+| Operation            | Ops/Second     | Avg Time | Notes                            |
+| -------------------- | -------------- | -------- | -------------------------------- |
+| **Registration**     |                |          |                                  |
+| Register class       | ~7.3M ops/sec  | 0.137µs  | Simple class registration        |
+| Register factory     | ~8.9M ops/sec  | 0.112µs  | Factory function registration    |
+| Register value       | ~7.4M ops/sec  | 0.135µs  | Direct value registration        |
+| **Resolution**       |                |          |                                  |
+| Singleton (cached)   | ~89.1M ops/sec | 0.011µs  | 🚀 **Fastest** - cached instance |
+| Scoped (cached)      | ~37.4M ops/sec | 0.027µs  | Cached within scope              |
+| Transient            | ~36.4M ops/sec | 0.027µs  | New instance each time           |
+| Factory              | ~23.6M ops/sec | 0.042µs  | Factory function call            |
+| Value                | ~31.3M ops/sec | 0.032µs  | Direct value retrieval           |
+| **Async Operations** |                |          |                                  |
+| Async factory        | ~2.6M ops/sec  | 0.387µs  | Async initialization             |
+| Async with deps      | ~1.5M ops/sec  | 0.665µs  | Async with dependencies          |
+| **Scope Management** |                |          |                                  |
+| Create scope         | ~27.8M ops/sec | 0.036µs  | Scope creation is O(1)           |
+| Scope disposal       | ~6.1M ops/sec  | 0.163µs  | Create and dispose a scope       |
+
+_Measured with `bun run bench` on Bun 1.4.4, macOS arm64. Results vary by machine._
 
 ### Key Performance Insights
 
-- **Singleton is 98% faster than Transient**: Use `Lifetime.Singleton` for services that don't need fresh state
-- **Minimal overhead**: Only 0.038µs per resolution for singletons
+- **Singleton is ~2.4x faster than Transient**: Use `Lifetime.Singleton` for services that don't need fresh state
+- **Minimal overhead**: Only 0.011µs per resolution for singletons
 - **Scoped is ideal for requests**: Fast enough for per-request services with proper isolation
 - **Security included**: All metrics include thread-safe circular dependency detection and race-condition protection
 
@@ -61,6 +68,8 @@ Run benchmarks yourself: `bun run bench`
 ```bash
 bun add fast-injection
 ```
+
+Requires TypeScript 5.2 or newer (peer dependency): containers expose `Symbol.asyncDispose`, and `await using` needs `"lib": ["ESNext"]` (or `esnext.disposable`) in your `tsconfig.json`.
 
 ## Quick Start
 
@@ -254,6 +263,137 @@ const user = userService.getUser("123");
 // ✅ Less boilerplate code
 ```
 
+### Explicit Dependencies (no decorators)
+
+Declare constructor dependencies at registration time. No decorators or `reflect-metadata` required, and it takes precedence over `@inject`:
+
+```typescript
+import { Container, Lifetime } from "fast-injection";
+
+class UserService {
+  constructor(
+    private db: Database,
+    private apiUrl: string,
+    private cache?: Cache,
+  ) {}
+}
+
+const container = new Container();
+container.register(Database, { lifetime: Lifetime.Singleton });
+container.registerValue("apiUrl", "https://api.example.com");
+
+// Dependencies are listed in constructor parameter order
+container.register(UserService, {
+  dependencies: [Database, "apiUrl", { token: Cache, optional: true }],
+});
+
+const service = container.resolve(UserService);
+```
+
+### Typed Tokens
+
+`createToken<T>()` returns a unique symbol that carries its type, so `resolve()` needs no type argument. Ideal for interfaces and configuration:
+
+```typescript
+import { Container, createToken } from "fast-injection";
+
+interface Config {
+  apiUrl: string;
+}
+
+const CONFIG = createToken<Config>("config");
+
+const container = new Container();
+container.registerValue(CONFIG, { apiUrl: "https://api.example.com" });
+
+const config = container.resolve(CONFIG); // inferred as Config
+```
+
+### Optional Resolution
+
+```typescript
+import { inject, optional } from "fast-injection/decorators";
+
+// Returns undefined instead of throwing when the token is not registered
+const cache = container.tryResolve(Cache) ?? new InMemoryCache();
+const maybe = await container.tryResolveAsync(Cache);
+
+// Optional constructor dependencies (undefined when not registered)
+class Reports {
+  constructor(@inject(Cache) @optional() private cache?: Cache) {}
+}
+
+// ...or without decorators
+container.register(Reports, {
+  dependencies: [{ token: Cache, optional: true }],
+});
+```
+
+Only a missing token is tolerated: a registered service that fails to build (for example because one of its own dependencies is missing) still throws.
+
+### Validate the Graph at Startup
+
+`container.validate()` inspects the registrations without instantiating anything and throws a `ValidationError` listing every problem:
+
+```typescript
+import { ValidationError } from "fast-injection";
+
+try {
+  container.validate();
+} catch (error) {
+  if (error instanceof ValidationError) {
+    for (const issue of error.issues) {
+      // issue.type: "missing" | "circular" | "captive"
+      console.error(issue.type, issue.message, issue.path);
+    }
+  }
+  throw error;
+}
+```
+
+- `missing`: a required dependency is not registered (optional ones are skipped)
+- `circular`: constructor dependencies form a cycle
+- `captive`: a singleton depends, directly or through transients, on a scoped service
+
+Factories are opaque and are not inspected: only constructor registrations are checked. A singleton is checked against the container that owns it, exactly as at runtime. Tokens that are registered later in request scopes (for example `scope.registerValue("requestContext", ...)`) are reported as `missing` when you validate the root container, so validate from a representative scope or declare such dependencies optional.
+
+### Automatic Scope Disposal with `await using`
+
+Containers implement `Symbol.asyncDispose`, so a scope is disposed when the block ends, even if it throws:
+
+```typescript
+async function handleRequest(req: Request) {
+  await using scope = container.createScope();
+  const handler = scope.resolve(RequestHandler);
+  return await handler.handle(req);
+} // scope.dispose() runs here
+```
+
+`await using` requires TypeScript 5.2+ with `"lib"` including `ESNext` / `esnext.disposable`.
+
+### Upgrading
+
+- Custom classes implementing `IContainer` must add `registerAll`, `resolveAllAsync`, `tryResolve`, `tryResolveAsync`, `validate` and `[Symbol.asyncDispose]`.
+- A promise from `resolveAsync()` of a singleton that is requested again from inside its own in-flight creation now rejects with `CircularDependencyError` instead of hanging or resolving late.
+- Transient instances are tracked weakly (see below): a transient garbage collected before container disposal no longer gets `onDispose`.
+- The `typescript` peer dependency is now `>=5.2.0`.
+
+### What's New / Fixed
+
+- Decorators imported from `fast-injection/decorators` now work with a container imported from `fast-injection` in the published package (the entry points share one metadata store).
+- `replace: true` now works and drops the cached instance of the replaced registration; `registerValue(token, value, { replace: true })` is accepted.
+- Factories receive a fully functional container (`has`, `createScope`, `tryResolve`, ...).
+- `registerAll` with singleton lifetime keeps one instance per implementation; `resolveAllAsync()` and `registerAll` are part of `IContainer`.
+- Async "diamond" graphs no longer raise a false `CircularDependencyError`, and async cycles through a pending singleton reject instead of hanging.
+- `registerValue` returns functions and classes as-is; `registerAsyncFactory` accepts promise-returning non-`async` functions; `resolveAsync` awaits async `onInit` hooks.
+- A scope can shadow an already-instantiated parent singleton, and a scope registration also shadows a parent _scoped_ service the scope had already resolved. Creating a scope is O(1).
+- An instance reachable through several registrations (for example a factory aliasing a singleton) is initialised and disposed once per container, and a scope never takes over an instance already owned by one of its ancestors: disposing a scope never disposes a parent singleton it merely aliases.
+- Disposal: caches are kept until `onDispose` hooks settle, so a service resolved during shutdown gets the existing instance, and concurrent `dispose()` calls wait for the same hooks. An async creation still in flight when its registration is replaced or its container is disposed is delivered to its waiters but not cached.
+- `resolveAsync()` waits for an async `onInit` on the call that creates the instance. Callers arriving while that hook is still running receive the instance immediately (so an `onInit` may itself resolve services that depend on its own instance).
+- Abstract classes are accepted as tokens at the type level (`container.register(AbstractLogger, ConsoleLogger)`).
+- A rejecting async `onDispose` no longer leaves the container half-disposed: state is cleared, the remaining hooks run, and the first error is rethrown.
+- **Memory:** transient instances with an `onDispose` hook are tracked weakly. They are still disposed with the container while alive, but are no longer retained until it is disposed. A transient that has been garbage collected before the container is disposed does not get `onDispose` called, so services that own resources which must be released should be scoped or singleton, or be disposed by their consumer.
+
 ## Documentation
 
 See the `docs/` folder for comprehensive documentation and design details.
@@ -274,18 +414,6 @@ bun test --watch
 bun run build
 
 # Run benchmarks
-bun run bench
-```
-
-## Security
-
-Fast-Injection includes multiple security enhancements to protect your applications:
-
-### Token Validation
-
-# Run benchmarks
-
-```bash
 bun run bench
 ```
 

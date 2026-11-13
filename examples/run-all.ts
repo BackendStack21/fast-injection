@@ -12,6 +12,10 @@ const examples = [
   "08-inject-decorator.ts",
   "09-decorators-factories.ts",
   "11-lifecycle-hooks-advanced.ts",
+  "12-explicit-dependencies.ts",
+  "13-typed-tokens-optional.ts",
+  "14-validation.ts",
+  "15-await-using.ts",
 ];
 
 console.log("🚀 Running all fast-injection examples...\n");
@@ -22,10 +26,11 @@ for (const example of examples) {
     console.log(`\n📝 Running: ${example}`);
     console.log("-".repeat(60));
 
-    const proc = Bun.spawn(["bun", "run", example], {
+    // Run from the project root so Bun picks up tsconfig.json (decorator settings)
+    const proc = Bun.spawn(["bun", "run", `${import.meta.dir}/${example}`], {
       stdout: "inherit",
       stderr: "inherit",
-      cwd: "examples",
+      cwd: `${import.meta.dir}/..`,
     });
 
     await proc.exited;
